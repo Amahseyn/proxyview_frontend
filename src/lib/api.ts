@@ -1,32 +1,10 @@
 // ProxyView API Client
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+import type { Post, PostInput } from '@/lib/types/post';
 
-export interface Post {
-  id: number;
-  slug: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  author: string;
-  date: string;
-  thumbnail: string;
-  url?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type { Post, PostInput };
 
-export interface PostInput {
-  title: string;
-  slug?: string;
-  excerpt?: string;
-  content: string;
-  category?: string;
-  author?: string;
-  date?: string;
-  thumbnail?: string;
-}
+const API_BASE = '/api';
 
 export const DEFAULT_POSTS: Post[] = [
   {
@@ -97,8 +75,27 @@ export const DEFAULT_POSTS: Post[] = [
   },
 ];
 
-// Fetch all posts with optional query params
+function filterFallbackPosts(params?: { category?: string; search?: string; limit?: number }): Post[] {
+  let posts = [...DEFAULT_POSTS];
+  if (params?.category && params.category !== 'All') {
+    posts = posts.filter(p => p.category.toLowerCase() === params.category!.toLowerCase());
+  }
+  if (params?.search) {
+    const q = params.search.toLowerCase();
+    posts = posts.filter(p => p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q));
+  }
+  if (params?.limit) {
+    posts = posts.slice(0, params.limit);
+  }
+  return posts;
+}
+
 export async function getPosts(params?: { category?: string; search?: string; limit?: number; page?: number }): Promise<Post[]> {
+  if (typeof window === 'undefined') {
+    const { queryPosts } = await import('@/lib/postsStore');
+    return queryPosts(params).data;
+  }
+
   try {
     const query = new URLSearchParams();
     if (params?.category && params.category !== 'All') query.append('category', params.category);
@@ -112,38 +109,40 @@ export async function getPosts(params?: { category?: string; search?: string; li
     const json = await res.json();
     return json.data || DEFAULT_POSTS;
   } catch (err) {
-    console.warn('API error or backend unavailable, returning fallback posts:', err);
-    let posts = [...DEFAULT_POSTS];
-    if (params?.category && params.category !== 'All') {
-      posts = posts.filter(p => p.category.toLowerCase() === params.category!.toLowerCase());
-    }
-    if (params?.search) {
-      const q = params.search.toLowerCase();
-      posts = posts.filter(p => p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q));
-    }
-    if (params?.limit) {
-      posts = posts.slice(0, params.limit);
-    }
-    return posts;
+    console.warn('API error, returning fallback posts:', err);
+    return filterFallbackPosts(params);
   }
 }
 
-// Fetch single post by slug or ID
 export async function getPost(identifier: string): Promise<Post | null> {
+  if (typeof window === 'undefined') {
+    const { findPost } = await import('@/lib/postsStore');
+    return findPost(identifier) ?? null;
+  }
+
   try {
     const res = await fetch(`${API_BASE}/posts/${identifier}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Post not found in API');
     const json = await res.json();
     return json.data || null;
   } catch (err) {
-    console.warn('API error or backend unavailable, searching fallback posts:', err);
-    const fallback = DEFAULT_POSTS.find(p => p.slug === identifier || String(p.id) === String(identifier));
-    return fallback || null;
+    console.warn('API error, searching fallback posts:', err);
+    return DEFAULT_POSTS.find(p => p.slug === identifier || String(p.id) === String(identifier)) ?? null;
   }
 }
 
-// Create new post
 export async function createPost(postData: PostInput): Promise<{ success: boolean; data?: Post; message?: string }> {
+  if (typeof window === 'undefined') {
+    try {
+      const { createPost: storeCreatePost } = await import('@/lib/postsStore');
+      const data = storeCreatePost(postData);
+      return { success: true, data, message: 'Post created successfully' };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error creating post';
+      return { success: false, message };
+    }
+  }
+
   try {
     const res = await fetch(`${API_BASE}/posts`, {
       method: 'POST',
@@ -153,14 +152,21 @@ export async function createPost(postData: PostInput): Promise<{ success: boolea
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Failed to create post');
     return { success: true, data: json.data, message: json.message };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error communicating with server';
     console.error('Error creating post:', err);
-    return { success: false, message: err.message || 'Error communicating with server' };
+    return { success: false, message };
   }
 }
 
-// Update existing post
 export async function updatePost(id: number | string, postData: Partial<PostInput>): Promise<{ success: boolean; data?: Post; message?: string }> {
+  if (typeof window === 'undefined') {
+    const { updatePost: storeUpdatePost } = await import('@/lib/postsStore');
+    const data = storeUpdatePost(id, postData);
+    if (!data) return { success: false, message: 'Post not found or cannot be updated' };
+    return { success: true, data, message: 'Post updated successfully' };
+  }
+
   try {
     const res = await fetch(`${API_BASE}/posts/${id}`, {
       method: 'PUT',
@@ -170,28 +176,33 @@ export async function updatePost(id: number | string, postData: Partial<PostInpu
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Failed to update post');
     return { success: true, data: json.data, message: json.message };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error communicating with server';
     console.error('Error updating post:', err);
-    return { success: false, message: err.message || 'Error communicating with server' };
+    return { success: false, message };
   }
 }
 
-// Delete post
 export async function deletePost(id: number | string): Promise<{ success: boolean; message?: string }> {
+  if (typeof window === 'undefined') {
+    const { deletePost: storeDeletePost } = await import('@/lib/postsStore');
+    const deleted = storeDeletePost(id);
+    if (!deleted) return { success: false, message: 'Post not found or already deleted' };
+    return { success: true, message: 'Post deleted successfully' };
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/posts/${id}`, {
-      method: 'DELETE',
-    });
+    const res = await fetch(`${API_BASE}/posts/${id}`, { method: 'DELETE' });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Failed to delete post');
     return { success: true, message: json.message };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error communicating with server';
     console.error('Error deleting post:', err);
-    return { success: false, message: err.message || 'Error communicating with server' };
+    return { success: false, message };
   }
 }
 
-// Upload image file
 export async function uploadImage(file: File): Promise<{ success: boolean; url?: string; message?: string }> {
   try {
     const formData = new FormData();
@@ -204,8 +215,9 @@ export async function uploadImage(file: File): Promise<{ success: boolean; url?:
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || 'Image upload failed');
     return { success: true, url: json.url, message: json.message };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to upload image to server';
     console.error('Error uploading image:', err);
-    return { success: false, message: err.message || 'Failed to upload image to server' };
+    return { success: false, message };
   }
 }
