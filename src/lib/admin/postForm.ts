@@ -1,5 +1,8 @@
-import type { Post, PostInput } from '@/lib/types/post';
+import type { Post, PostInput, PostStatus } from '@/lib/types/post';
 import { DEFAULT_AUTHOR, DEFAULT_THUMBNAIL, POST_CATEGORIES } from '@/lib/admin/constants';
+import { fromDateTimeLocalValue, toDateTimeLocalValue } from '@/lib/postStatus';
+
+export type PublishOption = 'draft' | 'publish' | 'schedule';
 
 export interface PostFormValues {
   title: string;
@@ -10,7 +13,11 @@ export interface PostFormValues {
   date: string;
   thumbnail: string;
   excerpt: string;
+  metaTitle: string;
+  metaDescription: string;
   content: string;
+  publishOption: PublishOption;
+  scheduledAt: string;
 }
 
 export function slugify(text: string): string {
@@ -42,6 +49,28 @@ export function parseCategoryFromPost(category: string): Pick<PostFormValues, 'c
     : { category: 'Other', customCategory: category };
 }
 
+export function statusToPublishOption(status: PostStatus, scheduledAt?: string | null): PublishOption {
+  if (status === 'draft') return 'draft';
+  if (status === 'scheduled') {
+    if (scheduledAt && new Date(scheduledAt) <= new Date()) {
+      return 'publish';
+    }
+    return 'schedule';
+  }
+  return 'publish';
+}
+
+export function publishOptionToStatus(option: PublishOption): PostStatus {
+  switch (option) {
+    case 'draft':
+      return 'draft';
+    case 'schedule':
+      return 'scheduled';
+    case 'publish':
+      return 'published';
+  }
+}
+
 export function emptyPostFormValues(): PostFormValues {
   return {
     title: '',
@@ -52,7 +81,11 @@ export function emptyPostFormValues(): PostFormValues {
     date: formatPostDate(),
     thumbnail: DEFAULT_THUMBNAIL,
     excerpt: '',
+    metaTitle: '',
+    metaDescription: '',
     content: '',
+    publishOption: 'draft',
+    scheduledAt: '',
   };
 }
 
@@ -67,11 +100,19 @@ export function postToFormValues(post: Post): PostFormValues {
     date: post.date || '',
     thumbnail: post.thumbnail || '',
     excerpt: post.excerpt || '',
+    metaTitle: post.metaTitle || '',
+    metaDescription: post.metaDescription || '',
     content: post.content || '',
+    publishOption: statusToPublishOption(post.status, post.scheduledAt),
+    scheduledAt: toDateTimeLocalValue(post.scheduledAt),
   };
 }
 
 export function formValuesToPostInput(values: PostFormValues): PostInput {
+  const status = publishOptionToStatus(values.publishOption);
+  const scheduledAt =
+    status === 'scheduled' ? fromDateTimeLocalValue(values.scheduledAt) : null;
+
   return {
     title: values.title.trim(),
     slug: values.slug.trim() || undefined,
@@ -80,15 +121,50 @@ export function formValuesToPostInput(values: PostFormValues): PostInput {
     date: values.date.trim() || undefined,
     thumbnail: values.thumbnail || DEFAULT_THUMBNAIL,
     excerpt: values.excerpt.trim() || undefined,
+    metaTitle: values.metaTitle.trim() || undefined,
+    metaDescription: values.metaDescription.trim() || undefined,
     content: values.content || '',
+    status,
+    scheduledAt,
   };
 }
 
-export function filterAdminPosts(posts: Post[], searchQuery: string, selectedCategory: string): Post[] {
+export function getSubmitLabel(option: PublishOption, mode: 'create' | 'edit'): string {
+  switch (option) {
+    case 'draft':
+      return mode === 'create' ? 'Save Draft' : 'Save Draft';
+    case 'schedule':
+      return mode === 'create' ? 'Schedule Post' : 'Update Schedule';
+    case 'publish':
+      return mode === 'create' ? 'Publish Post' : 'Publish Changes';
+  }
+}
+
+export function getSubmittingLabel(option: PublishOption): string {
+  switch (option) {
+    case 'draft':
+      return 'Saving draft...';
+    case 'schedule':
+      return 'Scheduling...';
+    case 'publish':
+      return 'Publishing...';
+  }
+}
+
+export function filterAdminPosts(
+  posts: Post[],
+  searchQuery: string,
+  selectedCategory: string,
+  selectedStatus: string
+): Post[] {
   let result = [...posts];
 
   if (selectedCategory !== 'All') {
     result = result.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
+  }
+
+  if (selectedStatus !== 'All') {
+    result = result.filter(p => p.status === selectedStatus);
   }
 
   if (searchQuery.trim()) {
@@ -97,6 +173,8 @@ export function filterAdminPosts(posts: Post[], searchQuery: string, selectedCat
       p =>
         p.title.toLowerCase().includes(q) ||
         p.excerpt.toLowerCase().includes(q) ||
+        p.metaTitle.toLowerCase().includes(q) ||
+        p.metaDescription.toLowerCase().includes(q) ||
         p.author.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q)
     );

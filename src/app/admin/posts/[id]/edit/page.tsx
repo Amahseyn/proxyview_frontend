@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import PostForm from '@/components/admin/PostForm';
 import { postToFormValues } from '@/lib/admin/postForm';
+import { isPostPublic } from '@/lib/postStatus';
 import { getPost, updatePost, Post } from '@/lib/api';
 
 type Props = {
@@ -55,9 +56,8 @@ export default function EditPostPage({ params }: Props) {
       mode="edit"
       initialValues={postToFormValues(post)}
       headerTitle={<>Edit: <span className="form-label-muted">{post.title}</span></>}
-      submitLabel="Save Changes"
-      submittingLabel="Saving..."
       viewLiveSlug={post.slug}
+      canViewLive={isPostPublic(post)}
       onSubmit={input => updatePost(id, input)}
     />
   );

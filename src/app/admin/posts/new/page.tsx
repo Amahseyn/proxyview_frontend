@@ -13,8 +13,6 @@ export default function NewPostPage() {
       mode="create"
       initialValues={emptyPostFormValues()}
       headerTitle="Create New Blog Post"
-      submitLabel="Publish Post"
-      submittingLabel="Publishing..."
       onSubmit={createPost}
       onSuccess={() => setTimeout(() => router.push('/admin'), 1200)}
     />

@@ -2,7 +2,10 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
-import { getPost, getPosts } from '@/lib/api';
+import JsonLd from '@/components/seo/JsonLd';
+import { buildPostMetadata } from '@/lib/postSeo';
+import { getPost } from '@/lib/posts.server';
+import { buildBlogPostingJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -12,10 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
   if (!post) return { title: 'Post Not Found — ProxyView' };
-  return {
-    title: `${post.title} | ProxyView`,
-    description: post.excerpt || `${post.title} on ProxyView`,
-  };
+  return buildPostMetadata(post);
 }
 
 export default async function PostPage({ params }: Props) {
@@ -28,28 +28,21 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <section className="post-single">
+      <JsonLd
+        data={[
+          buildBlogPostingJsonLd(post),
+          buildBreadcrumbJsonLd([
+            { name: 'Home', path: '/' },
+            { name: 'Blog', path: '/blog' },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ]),
+        ]}
+      />
       <div className="container">
         <div className="post-single-inner">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <Link href="/blog" className="post-back" style={{ margin: 0 }}>
-              ← Back to Blog
-            </Link>
-            <Link
-              href={`/admin/posts/${post.id}/edit`}
-              style={{
-                fontSize: '13px',
-                fontFamily: 'var(--font-ui)',
-                color: 'var(--primary)',
-                background: 'rgba(255, 227, 0, 0.25)',
-                padding: '5px 12px',
-                borderRadius: '6px',
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              ✏️ Edit Post in Admin
-            </Link>
-          </div>
+          <Link href="/blog" className="post-back" style={{ margin: '0 0 24px' }}>
+            ← Back to Blog
+          </Link>
 
           <div className="post-single-meta">
             {post.category && <span className="post-single-category">{post.category}</span>}

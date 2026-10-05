@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SITE_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — ProxyView',
@@ -76,7 +77,7 @@ export default function PrivacyPolicyPage() {
               <li>Object to or restrict processing of your data</li>
               <li>Lodge a complaint with a supervisory authority</li>
             </ul>
-            <p>To exercise any of these rights, contact us at hello@proxyview.net.</p>
+            <p>To exercise any of these rights, contact us at <a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>.</p>
 
             <h2>Security</h2>
             <p>
@@ -90,7 +91,7 @@ export default function PrivacyPolicyPage() {
 
             <h2>Contact Us</h2>
             <p>
-              If you have questions about this Privacy Policy, please contact us at hello@proxyview.net.
+              If you have questions about this Privacy Policy, please contact us at <a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>.
             </p>
           </div>
         </div>

@@ -1,20 +1,50 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPosts } from '@/lib/api';
+import JsonLd from '@/components/seo/JsonLd';
+import { getPosts } from '@/lib/posts.server';
+import { resolveCategorySlug } from '@/lib/seo/categories';
+import { buildBlogCollectionPageJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 
-export const metadata: Metadata = {
-  title: 'Blog — ProxyView',
-  description: 'Guides, comparisons, and research on proxies, anti-detect browsers, and web scraping from the ProxyView team.',
+const BLOG_LIST_DESCRIPTION =
+  'Guides, comparisons, and research on proxies, anti-detect browsers, and web scraping from the ProxyView team.';
+
+type Props = {
+  searchParams: Promise<{ category?: string }>;
 };
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { category } = await searchParams;
+  const hasCategoryFilter = Boolean(category);
+
+  return {
+    title: 'Blog — ProxyView',
+    description: BLOG_LIST_DESCRIPTION,
+    alternates: {
+      canonical: '/blog',
+    },
+    ...(hasCategoryFilter ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 export const dynamic = 'force-dynamic';
 
-export default async function BlogPage() {
-  const posts = await getPosts();
+export default async function BlogPage({ searchParams }: Props) {
+  const { category } = await searchParams;
+  const resolvedCategory = resolveCategorySlug(category);
+  const posts = await getPosts(resolvedCategory ? { category: resolvedCategory } : undefined);
 
   return (
     <>
+      <JsonLd
+        data={[
+          buildBlogCollectionPageJsonLd(posts, BLOG_LIST_DESCRIPTION),
+          buildBreadcrumbJsonLd([
+            { name: 'Home', path: '/' },
+            { name: 'Blog', path: '/blog' },
+          ]),
+        ]}
+      />
       <div className="page-hero">
         <div className="container">
           <h1>Blog</h1>
@@ -25,7 +55,9 @@ export default async function BlogPage() {
         <div className="container">
           {posts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
-              <p style={{ fontSize: '18px', color: '#64748b' }}>No posts published yet.</p>
+              <p style={{ fontSize: '18px', color: '#64748b' }}>
+                {resolvedCategory ? `No posts in ${resolvedCategory} yet.` : 'No posts published yet.'}
+              </p>
             </div>
           ) : (
             <div className="blog-grid">

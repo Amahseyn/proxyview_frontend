@@ -6,12 +6,34 @@ import Image from 'next/image';
 import AdminAlert from '@/components/admin/AdminAlert';
 import ConfirmModal from '@/components/admin/ConfirmModal';
 import { filterAdminPosts, getPostCategories } from '@/lib/admin/postForm';
-import { deletePost, getPosts, Post } from '@/lib/api';
+import { formatScheduledAt, getPostStatusLabel, isPostPublic } from '@/lib/postStatus';
+import { deletePost, getContactMessages, getPosts, Post } from '@/lib/api';
+
+function StatusBadge({ post }: { post: Post }) {
+  const label = getPostStatusLabel(post.status);
+  const className = `post-status-badge post-status-badge--${post.status}`;
+
+  if (post.status === 'scheduled' && post.scheduledAt) {
+    const isLive = isPostPublic(post);
+    return (
+      <span className={className}>
+        {isLive ? 'Published' : label}
+        <span className="post-status-meta">
+          {isLive ? `Went live ${formatScheduledAt(post.scheduledAt)}` : formatScheduledAt(post.scheduledAt)}
+        </span>
+      </span>
+    );
+  }
+
+  return <span className={className}>{label}</span>;
+}
 
 export default function AdminDashboardPage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [messageCount, setMessageCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedStatus, setSelectedStatus] = useState('All');
   const [loading, setLoading] = useState(true);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -21,7 +43,12 @@ export default function AdminDashboardPage() {
     async function loadPosts() {
       setLoading(true);
       try {
-        setPosts(await getPosts());
+        const [postsData, messagesData] = await Promise.all([
+          getPosts({ admin: true }),
+          getContactMessages(),
+        ]);
+        setPosts(postsData);
+        setMessageCount(messagesData.length);
       } catch (err) {
         console.error('Failed to load posts:', err);
       } finally {
@@ -32,11 +59,17 @@ export default function AdminDashboardPage() {
   }, []);
 
   const filteredPosts = useMemo(
-    () => filterAdminPosts(posts, searchQuery, selectedCategory),
-    [posts, searchQuery, selectedCategory]
+    () => filterAdminPosts(posts, searchQuery, selectedCategory, selectedStatus),
+    [posts, searchQuery, selectedCategory, selectedStatus]
   );
 
   const categories = useMemo(() => getPostCategories(posts), [posts]);
+
+  const statusCounts = useMemo(() => ({
+    draft: posts.filter(p => p.status === 'draft').length,
+    scheduled: posts.filter(p => p.status === 'scheduled' && !isPostPublic(p)).length,
+    published: posts.filter(p => isPostPublic(p)).length,
+  }), [posts]);
 
   const handleDeleteConfirm = async () => {
     if (!postToDelete) return;
@@ -78,19 +111,33 @@ export default function AdminDashboardPage() {
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">🏷️</div>
+          <div className="stat-icon">📢</div>
           <div className="stat-info">
-            <h4>Categories</h4>
-            <div className="stat-number">{categories.length - 1}</div>
+            <h4>Published</h4>
+            <div className="stat-number">{statusCounts.published}</div>
           </div>
         </div>
+        <div className="stat-card">
+          <div className="stat-icon">🕒</div>
+          <div className="stat-info">
+            <h4>Scheduled</h4>
+            <div className="stat-number">{statusCounts.scheduled}</div>
+          </div>
+        </div>
+        <Link href="/admin/messages" className="stat-card stat-card-link">
+          <div className="stat-icon">✉️</div>
+          <div className="stat-info">
+            <h4>Contact Messages</h4>
+            <div className="stat-number">{messageCount}</div>
+          </div>
+        </Link>
       </div>
 
       <div className="admin-card">
         <div className="admin-card-header">
           <div>
             <h1 className="admin-card-title">Blog Posts</h1>
-            <p className="admin-card-subtitle">Create, edit, and manage blog posts.</p>
+            <p className="admin-card-subtitle">Create drafts, publish immediately, or schedule posts for later.</p>
           </div>
           <Link href="/admin/posts/new" className="btn btn-primary admin-btn-sm">
             + Add New Post
@@ -115,6 +162,16 @@ export default function AdminDashboardPage() {
                 <option key={cat} value={cat}>Category: {cat}</option>
               ))}
             </select>
+            <select
+              value={selectedStatus}
+              onChange={e => setSelectedStatus(e.target.value)}
+              className="admin-select"
+            >
+              <option value="All">Status: All</option>
+              <option value="draft">Status: Draft</option>
+              <option value="scheduled">Status: Scheduled</option>
+              <option value="published">Status: Published</option>
+            </select>
             <span className="admin-filter-count">
               Showing <strong>{filteredPosts.length}</strong> of {posts.length}
             </span>
@@ -138,6 +195,7 @@ export default function AdminDashboardPage() {
                 <tr>
                   <th style={{ width: '80px' }}>Image</th>
                   <th>Title</th>
+                  <th>Status</th>
                   <th>Category</th>
                   <th>Author</th>
                   <th>Date</th>
@@ -169,14 +227,17 @@ export default function AdminDashboardPage() {
                       </div>
                       <div className="post-slug">/{post.slug}</div>
                     </td>
+                    <td><StatusBadge post={post} /></td>
                     <td><span className="post-category-tag">{post.category || 'Guides'}</span></td>
                     <td>{post.author || 'wm'}</td>
                     <td>{post.date}</td>
                     <td>
                       <div className="action-buttons">
-                        <Link href={`/blog/${post.slug}`} target="_blank" className="action-btn action-btn-view">
-                          View
-                        </Link>
+                        {isPostPublic(post) && (
+                          <Link href={`/blog/${post.slug}`} target="_blank" className="action-btn action-btn-view">
+                            View
+                          </Link>
+                        )}
                         <Link href={`/admin/posts/${post.id}/edit`} className="action-btn action-btn-edit">
                           Edit
                         </Link>

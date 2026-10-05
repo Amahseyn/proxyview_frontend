@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SITE_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Terms and Conditions — ProxyView',
@@ -79,7 +80,7 @@ export default function TermsPage() {
 
             <h2>Contact</h2>
             <p>
-              If you have any questions about these Terms and Conditions, please contact us at hello@proxyview.net.
+              If you have any questions about these Terms and Conditions, please contact us at <a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a>.
             </p>
           </div>
         </div>

@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import FaqList from './FaqList';
+import JsonLd from '@/components/seo/JsonLd';
+import { FAQ_ITEMS } from '@/lib/data/faqs';
+import { buildFaqPageJsonLd } from '@/lib/seo/jsonLd';
 
 export const metadata: Metadata = {
   title: 'Frequently Asked Questions — ProxyView',
@@ -7,5 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default function FaqPage() {
-  return <FaqList />;
+  return (
+    <>
+      <JsonLd data={buildFaqPageJsonLd(FAQ_ITEMS)} />
+      <FaqList />
+    </>
+  );
 }

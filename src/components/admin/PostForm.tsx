@@ -7,10 +7,14 @@ import RichTextEditor from '@/components/admin/RichTextEditor';
 import AdminAlert from '@/components/admin/AdminAlert';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { POST_CATEGORIES } from '@/lib/admin/constants';
+import { META_DESCRIPTION_MAX, META_TITLE_MAX } from '@/lib/postSeo';
 import {
   extractExcerpt,
   formValuesToPostInput,
+  getSubmitLabel,
+  getSubmittingLabel,
   PostFormValues,
+  PublishOption,
   slugify,
 } from '@/lib/admin/postForm';
 import { uploadImage } from '@/lib/api';
@@ -20,9 +24,8 @@ type PostFormProps = {
   initialValues: PostFormValues;
   autoSlugFromTitle?: boolean;
   headerTitle: React.ReactNode;
-  submitLabel: string;
-  submittingLabel: string;
   viewLiveSlug?: string;
+  canViewLive?: boolean;
   onSubmit: (input: ReturnType<typeof formValuesToPostInput>) => Promise<{ success: boolean; message?: string }>;
   onSuccess?: () => void;
 };
@@ -32,9 +35,8 @@ export default function PostForm({
   initialValues,
   autoSlugFromTitle = mode === 'create',
   headerTitle,
-  submitLabel,
-  submittingLabel,
   viewLiveSlug,
+  canViewLive = false,
   onSubmit,
   onSuccess,
 }: PostFormProps) {
@@ -44,6 +46,9 @@ export default function PostForm({
   const [isUploadingThumb, setIsUploadingThumb] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  const submitLabel = getSubmitLabel(values.publishOption, mode);
+  const submittingLabel = getSubmittingLabel(values.publishOption);
 
   const updateField = <K extends keyof PostFormValues>(key: K, value: PostFormValues[K]) => {
     setValues(prev => ({ ...prev, [key]: value }));
@@ -85,6 +90,11 @@ export default function PostForm({
       return;
     }
 
+    if (values.publishOption === 'schedule' && !values.scheduledAt) {
+      setErrorMsg('Please choose a date and time to schedule this post.');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg('');
     setSuccessMsg('');
@@ -92,7 +102,12 @@ export default function PostForm({
     try {
       const res = await onSubmit(formValuesToPostInput(values));
       if (res.success) {
-        setSuccessMsg(mode === 'create' ? 'Post created successfully! Redirecting...' : 'Post updated successfully!');
+        const successMessages = {
+          draft: mode === 'create' ? 'Draft saved successfully! Redirecting...' : 'Draft updated successfully!',
+          publish: mode === 'create' ? 'Post published successfully! Redirecting...' : 'Post updated successfully!',
+          schedule: mode === 'create' ? 'Post scheduled successfully! Redirecting...' : 'Schedule updated successfully!',
+        };
+        setSuccessMsg(successMessages[values.publishOption]);
         onSuccess?.();
       } else {
         setErrorMsg(res.message || `Failed to ${mode === 'create' ? 'create' : 'update'} post`);
@@ -107,13 +122,21 @@ export default function PostForm({
 
   const uploadLabel = mode === 'create' ? 'Click to Upload Featured Image' : 'Click to Change Featured Image';
 
+  const setPublishOption = (option: PublishOption) => {
+    setValues(prev => ({
+      ...prev,
+      publishOption: option,
+      scheduledAt: option === 'schedule' ? prev.scheduledAt : '',
+    }));
+  };
+
   return (
     <div className="container">
       <AdminPageHeader
         title={headerTitle}
         actions={
           <>
-            {viewLiveSlug && (
+            {canViewLive && viewLiveSlug && (
               <Link href={`/blog/${viewLiveSlug}`} target="_blank" className="btn btn-outline admin-btn-sm">
                 View Live ↗
               </Link>
@@ -176,11 +199,14 @@ export default function PostForm({
 
           <div className="form-box">
             <h3 className="form-box-title">Post Content</h3>
-            <p className="form-box-desc">Format text, headings, lists, colors, and images.</p>
+            <p className="form-box-desc">
+              Write and format the article body—headings, lists, tables, links, and images. Use bold and styles inside table cells via the cell toolbar.
+            </p>
             <RichTextEditor
               value={values.content}
               onChange={content => updateField('content', content)}
               placeholder="Write your blog post content here..."
+              label="Article body"
             />
           </div>
 
@@ -204,9 +230,138 @@ export default function PostForm({
               onChange={e => updateField('excerpt', e.target.value)}
             />
           </div>
+
+          <div className="form-box">
+            <div className="form-field-header">
+              <div>
+                <h3 className="form-box-title">SEO / Google Meta</h3>
+                <p className="form-box-desc">Controls the title and description shown in Google search results.</p>
+              </div>
+            </div>
+
+            <div className="form-field">
+              <div className="form-field-header">
+                <label htmlFor="post-meta-title">Meta Title</label>
+                <button
+                  type="button"
+                  className="form-link-btn"
+                  onClick={() => updateField('metaTitle', values.title)}
+                >
+                  Use post title
+                </button>
+              </div>
+              <input
+                id="post-meta-title"
+                type="text"
+                className="form-input"
+                placeholder="Custom Google search title (optional)"
+                value={values.metaTitle}
+                onChange={e => updateField('metaTitle', e.target.value)}
+                maxLength={META_TITLE_MAX}
+              />
+              <p className={`form-help seo-char-count ${values.metaTitle.length > META_TITLE_MAX ? 'over-limit' : ''}`}>
+                {values.metaTitle.length}/{META_TITLE_MAX} characters · Recommended 50–60
+              </p>
+            </div>
+
+            <div className="form-field">
+              <div className="form-field-header">
+                <label htmlFor="post-meta-description">Meta Description</label>
+                <button
+                  type="button"
+                  className="form-link-btn"
+                  onClick={() => updateField('metaDescription', values.excerpt || extractExcerpt(values.content))}
+                >
+                  Use excerpt
+                </button>
+              </div>
+              <textarea
+                id="post-meta-description"
+                rows={3}
+                className="form-textarea"
+                placeholder="Custom Google search description (optional)"
+                value={values.metaDescription}
+                onChange={e => updateField('metaDescription', e.target.value)}
+                maxLength={META_DESCRIPTION_MAX}
+              />
+              <p className={`form-help seo-char-count ${values.metaDescription.length > META_DESCRIPTION_MAX ? 'over-limit' : ''}`}>
+                {values.metaDescription.length}/{META_DESCRIPTION_MAX} characters · Recommended 150–160
+              </p>
+            </div>
+
+            <div className="seo-preview">
+              <p className="seo-preview-label">Google preview</p>
+              <div className="seo-preview-card">
+                <p className="seo-preview-title">
+                  {values.metaTitle || values.title || 'Post title'}
+                </p>
+                <p className="seo-preview-url">
+                  proxyview.net/blog/{values.slug || 'your-post-slug'}
+                </p>
+                <p className="seo-preview-description">
+                  {values.metaDescription || values.excerpt || 'Your meta description will appear here.'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>
+          <div className="form-box">
+            <h3 className="form-box-title">Publish</h3>
+            <p className="form-box-desc">Save as draft, publish immediately, or schedule for later.</p>
+
+            <div className="publish-options">
+              <label className={`publish-option ${values.publishOption === 'draft' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  name="publish-option"
+                  checked={values.publishOption === 'draft'}
+                  onChange={() => setPublishOption('draft')}
+                />
+                <span className="publish-option-title">Draft</span>
+                <span className="publish-option-desc">Hidden from the public blog until published.</span>
+              </label>
+
+              <label className={`publish-option ${values.publishOption === 'publish' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  name="publish-option"
+                  checked={values.publishOption === 'publish'}
+                  onChange={() => setPublishOption('publish')}
+                />
+                <span className="publish-option-title">Publish now</span>
+                <span className="publish-option-desc">Make this post visible on the blog immediately.</span>
+              </label>
+
+              <label className={`publish-option ${values.publishOption === 'schedule' ? 'active' : ''}`}>
+                <input
+                  type="radio"
+                  name="publish-option"
+                  checked={values.publishOption === 'schedule'}
+                  onChange={() => setPublishOption('schedule')}
+                />
+                <span className="publish-option-title">Schedule</span>
+                <span className="publish-option-desc">Choose a future date and time to publish automatically.</span>
+              </label>
+            </div>
+
+            {values.publishOption === 'schedule' && (
+              <div className="form-field form-field-spaced">
+                <label htmlFor="post-scheduled-at">Publish date & time *</label>
+                <input
+                  id="post-scheduled-at"
+                  type="datetime-local"
+                  className="form-input"
+                  value={values.scheduledAt}
+                  onChange={e => updateField('scheduledAt', e.target.value)}
+                  required
+                />
+                <p className="form-help">The post will appear on the blog at this time.</p>
+              </div>
+            )}
+          </div>
+
           <div className="form-box">
             <h3 className="form-box-title">Featured Image</h3>
 
@@ -301,7 +456,7 @@ export default function PostForm({
             </div>
 
             <div className="form-field">
-              <label htmlFor="post-date">Published Date</label>
+              <label htmlFor="post-date">Display Date</label>
               <input
                 id="post-date"
                 type="text"
@@ -309,6 +464,7 @@ export default function PostForm({
                 value={values.date}
                 onChange={e => updateField('date', e.target.value)}
               />
+              <p className="form-help">Shown on the blog card and article page.</p>
             </div>
           </div>
 

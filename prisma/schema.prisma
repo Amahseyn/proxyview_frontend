@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique
+  title       String
+  excerpt     String    @default("")
+  content     String    @default("")
+  category    String    @default("Guides")
+  author      String    @default("wm")
+  date        String    @default("")
+  thumbnail        String    @default("")
+  metaTitle        String    @default("") @map("meta_title")
+  metaDescription  String    @default("") @map("meta_description")
+  url              String?
+  status           String    @default("published")
+  scheduledAt DateTime? @map("scheduled_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("posts")
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String   @default("")
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("contact_messages")
+}
+
+model GlossaryPageConfig {
+  id           Int      @id @default(1)
+  heroTitle    String   @default("Proxy Glossary") @map("hero_title")
+  heroSubtitle String   @default("Key terms and definitions in the proxy, anti-detect, and web scraping industry.") @map("hero_subtitle")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("glossary_page_config")
+}
+
+model GlossaryTerm {
+  id         Int      @id @default(autoincrement())
+  term       String
+  definition String
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([sortOrder])
+  @@map("glossary_terms")
+}

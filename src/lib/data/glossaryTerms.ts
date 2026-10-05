@@ -1,11 +1,9 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Proxy Glossary — ProxyView',
-  description: 'A comprehensive glossary of proxy, anti-detect, and web scraping terminology.',
+export const DEFAULT_GLOSSARY_HERO = {
+  heroTitle: 'Proxy Glossary',
+  heroSubtitle: 'Key terms and definitions in the proxy, anti-detect, and web scraping industry.',
 };
 
-const terms = [
+export const glossaryTerms = [
   { term: 'Proxy Server', definition: 'An intermediary server that routes your internet requests through its own IP address, hiding your real IP from the target server.' },
   { term: 'Residential Proxy', definition: 'A proxy that uses an IP address assigned by an ISP to a real home user. Highly authentic and difficult to detect as a proxy.' },
   { term: 'Datacenter Proxy', definition: 'A proxy hosted in a cloud data center. Fast and affordable, but more easily detected by anti-bot systems due to known datacenter IP ranges.' },
@@ -25,28 +23,3 @@ const terms = [
   { term: 'IP Pool', definition: 'A collection of IP addresses managed by a proxy provider, used to rotate requests and distribute traffic to avoid detection.' },
   { term: 'Geo-targeting', definition: 'The ability to route requests through proxies in specific countries or cities to access geo-restricted content or verify localized ads.' },
 ];
-
-export default function GlossaryPage() {
-  return (
-    <>
-      <div className="page-hero">
-        <div className="container">
-          <h1>Proxy Glossary</h1>
-          <p>Key terms and definitions in the proxy, anti-detect, and web scraping industry.</p>
-        </div>
-      </div>
-      <section className="glossary-page section">
-        <div className="container">
-          <div className="glossary-inner">
-            {terms.map((item, i) => (
-              <div key={i} className="glossary-term">
-                <h3>{item.term}</h3>
-                <p>{item.definition}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}

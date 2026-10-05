@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
-const MAX_SIZE = 10 * 1024 * 1024;
+import {
+  buildUploadFilename,
+  getUploadServePath,
+  MAX_UPLOAD_SIZE,
+  resolveUploadMimeType,
+  UPLOAD_DIR,
+} from '@/lib/uploads';
 
 export async function POST(request: Request) {
   try {
@@ -14,40 +18,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'No image file uploaded' }, { status: 400 });
     }
 
-    if (!ALLOWED_MIME.includes(file.type)) {
+    const mimeType = resolveUploadMimeType(file);
+    if (!mimeType) {
       return NextResponse.json(
         { success: false, message: 'Only image files (JPEG, PNG, GIF, WebP, SVG) are allowed!' },
         { status: 400 }
       );
     }
 
-    if (file.size > MAX_SIZE) {
+    if (file.size > MAX_UPLOAD_SIZE) {
       return NextResponse.json({ success: false, message: 'File too large (max 10 MB)' }, { status: 400 });
     }
 
-    const uploadDir = path.join(process.cwd(), 'public/uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(UPLOAD_DIR)) {
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
 
-    const ext = path.extname(file.name).toLowerCase() || '.jpg';
-    const filename = `img-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    const filename = buildUploadFilename(file, mimeType);
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(path.join(uploadDir, filename), buffer);
+    fs.writeFileSync(path.join(UPLOAD_DIR, filename), buffer);
 
-    const host = request.headers.get('host') || 'localhost:3000';
-    const protocol = request.headers.get('x-forwarded-proto') || 'http';
-    const imageUrl = `${protocol}://${host}/uploads/${filename}`;
-    const relativeUrl = `/uploads/${filename}`;
+    const relativeUrl = getUploadServePath(filename);
 
     return NextResponse.json(
       {
         success: true,
         message: 'Image uploaded successfully',
-        url: imageUrl,
+        url: relativeUrl,
         relativeUrl,
         filename,
         size: file.size,
+        mimeType,
       },
       { status: 201 }
     );

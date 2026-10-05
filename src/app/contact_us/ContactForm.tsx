@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { SITE_EMAIL, SITE_URL } from '@/lib/site';
 
 const API_BASE = '/api';
 
@@ -57,7 +58,7 @@ export default function ContactForm() {
               </div>
               <div className="contact-detail-text">
                 <h4>Email</h4>
-                <p>hello@proxyview.net</p>
+                <p><a href={`mailto:${SITE_EMAIL}`}>{SITE_EMAIL}</a></p>
               </div>
             </div>
             <div className="contact-detail">
@@ -68,7 +69,7 @@ export default function ContactForm() {
               </div>
               <div className="contact-detail-text">
                 <h4>Website</h4>
-                <p>proxyview.net</p>
+                <p><a href={`https://${SITE_URL}`} target="_blank" rel="noopener noreferrer">{SITE_URL}</a></p>
               </div>
             </div>
             <div className="contact-detail">

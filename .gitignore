@@ -49,3 +49,9 @@ next-env.d.ts
 
 # uploads / user-generated content
 /public/uploads/
+
+# sqlite database
+/data/
+*.db
+*.db-shm
+*.db-wal

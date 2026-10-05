@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getPosts } from '@/lib/api';
+import { getPosts } from '@/lib/posts.server';
 
 export default async function NewsSection() {
   const posts = await getPosts({ limit: 6 });
@@ -7,10 +7,10 @@ export default async function NewsSection() {
   return (
     <section className="news section">
       <div className="container">
-        <div className="news-header">
+        <div className="section-header">
           <h2>News in Proxy and Anti Detect Bot Industry</h2>
         </div>
-        <p className="news-subheader">
+        <p className="section-subheader">
           Stay up to date with the latest guides, comparisons, and research from the ProxyView team.
         </p>
         <div className="news-grid">
