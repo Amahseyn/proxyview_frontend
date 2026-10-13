@@ -1,13 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import RichTextEditor from '@/components/admin/RichTextEditor';
+import ContentBlockEditor, { type MediaInsertRequest } from '@/components/admin/ContentBlockEditor';
+import PostMediaPanel from '@/components/admin/PostMediaPanel';
+import PostFaqEditor from '@/components/admin/PostFaqEditor';
+import PostTocEditor from '@/components/admin/PostTocEditor';
+import CollapsibleFormSection from '@/components/admin/CollapsibleFormSection';
+import PublishStatusPicker from '@/components/admin/PublishStatusPicker';
+import TaxonomyChipPicker from '@/components/admin/TaxonomyChipPicker';
 import AdminAlert from '@/components/admin/AdminAlert';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { POST_CATEGORIES } from '@/lib/admin/constants';
 import { META_DESCRIPTION_MAX, META_TITLE_MAX } from '@/lib/postSeo';
+import { getEditorPlainStats } from '@/lib/editorStats';
 import {
   extractExcerpt,
   formValuesToPostInput,
@@ -17,7 +23,7 @@ import {
   PublishOption,
   slugify,
 } from '@/lib/admin/postForm';
-import { uploadImage } from '@/lib/api';
+import { getCategories, getTags, uploadImage, type Category, type Tag } from '@/lib/api';
 
 type PostFormProps = {
   mode: 'create' | 'edit';
@@ -46,6 +52,27 @@ export default function PostForm({
   const [isUploadingThumb, setIsUploadingThumb] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [mediaInsert, setMediaInsert] = useState<MediaInsertRequest | null>(null);
+  const [imageUploadBatch, setImageUploadBatch] = useState<{ seq: number; files: File[] } | null>(null);
+  const [isUploadingContentImages, setIsUploadingContentImages] = useState(false);
+  const [scrollToBlockId, setScrollToBlockId] = useState<string | null>(null);
+
+  const contentStats = useMemo(() => getEditorPlainStats(values.content), [values.content]);
+
+  useEffect(() => {
+    async function loadTaxonomy() {
+      try {
+        const [categories, tags] = await Promise.all([getCategories(), getTags()]);
+        setAllCategories(categories);
+        setAllTags(tags);
+      } catch (err) {
+        console.error('Failed to load categories/tags:', err);
+      }
+    }
+    loadTaxonomy();
+  }, []);
 
   const submitLabel = getSubmitLabel(values.publishOption, mode);
   const submittingLabel = getSubmittingLabel(values.publishOption);
@@ -62,10 +89,7 @@ export default function PostForm({
     }));
   };
 
-  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadFeaturedImage = async (file: File) => {
     setIsUploadingThumb(true);
     setErrorMsg('');
     try {
@@ -81,6 +105,13 @@ export default function PostForm({
     } finally {
       setIsUploadingThumb(false);
     }
+  };
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFeaturedImage(file);
+    e.target.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -100,12 +131,13 @@ export default function PostForm({
     setSuccessMsg('');
 
     try {
-      const res = await onSubmit(formValuesToPostInput(values));
+      const res = await onSubmit(formValuesToPostInput(values, { categories: allCategories }));
       if (res.success) {
         const successMessages = {
           draft: mode === 'create' ? 'Draft saved successfully! Redirecting...' : 'Draft updated successfully!',
           publish: mode === 'create' ? 'Post published successfully! Redirecting...' : 'Post updated successfully!',
           schedule: mode === 'create' ? 'Post scheduled successfully! Redirecting...' : 'Schedule updated successfully!',
+          archive: 'Post archived successfully!',
         };
         setSuccessMsg(successMessages[values.publishOption]);
         onSuccess?.();
@@ -120,8 +152,6 @@ export default function PostForm({
     }
   };
 
-  const uploadLabel = mode === 'create' ? 'Click to Upload Featured Image' : 'Click to Change Featured Image';
-
   const setPublishOption = (option: PublishOption) => {
     setValues(prev => ({
       ...prev,
@@ -131,142 +161,136 @@ export default function PostForm({
   };
 
   return (
-    <div className="container">
-      <AdminPageHeader
-        title={headerTitle}
-        actions={
-          <>
-            {canViewLive && viewLiveSlug && (
-              <Link href={`/blog/${viewLiveSlug}`} target="_blank" className="btn btn-outline admin-btn-sm">
-                View Live ↗
-              </Link>
-            )}
-            {mode === 'create' && (
-              <Link href="/admin" className="btn btn-outline admin-btn-sm">Cancel</Link>
-            )}
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="btn btn-primary admin-btn-sm"
-            >
-              {isSubmitting ? submittingLabel : submitLabel}
-            </button>
-          </>
-        }
-      />
+    <div className="container post-form-page">
+      <div className="post-form-topbar">
+        <AdminPageHeader
+          title={headerTitle}
+          actions={
+            <>
+              <span className="post-form-meta-pill">{contentStats.words} words · ~{contentStats.readingMinutes} min</span>
+              {canViewLive && viewLiveSlug && (
+                <Link href={`/blog/${viewLiveSlug}`} target="_blank" className="btn btn-outline admin-btn-sm">
+                  Preview live ↗
+                </Link>
+              )}
+              {mode === 'create' && (
+                <Link href="/admin" className="btn btn-outline admin-btn-sm">Cancel</Link>
+              )}
+              <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="btn btn-primary admin-btn-sm">
+                {isSubmitting ? submittingLabel : submitLabel}
+              </button>
+            </>
+          }
+        />
+      </div>
 
       {errorMsg && <AdminAlert type="error" message={errorMsg} />}
       {successMsg && <AdminAlert type="success" message={successMsg} />}
 
-      <form onSubmit={handleSubmit} className="post-form-grid">
-        <div>
-          <div className="form-box">
-            <div className="form-field">
-              <label htmlFor="post-title">Post Title *</label>
-              <input
-                id="post-title"
-                type="text"
-                className="form-input form-input-lg"
-                placeholder="e.g. Best Residential Proxies for Web Scraping in 2025"
-                value={values.title}
-                onChange={e => handleTitleChange(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="post-slug">
-                URL Slug{' '}
-                <span className="form-label-muted">
-                  ({values.slug ? `/blog/${values.slug}` : 'Auto-generated'})
-                </span>
-              </label>
-              <input
-                id="post-slug"
-                type="text"
-                className="form-input"
-                placeholder="url-slug-example"
-                value={values.slug}
-                onChange={e => {
-                  updateField('slug', e.target.value);
-                  setCustomSlug(true);
-                }}
-              />
-              <p className="form-help">Unique link path for this article.</p>
-            </div>
-          </div>
-
-          <div className="form-box">
-            <h3 className="form-box-title">Post Content</h3>
-            <p className="form-box-desc">
-              Write and format the article body—headings, lists, tables, links, and images. Use bold and styles inside table cells via the cell toolbar.
-            </p>
-            <RichTextEditor
-              value={values.content}
-              onChange={content => updateField('content', content)}
-              placeholder="Write your blog post content here..."
-              label="Article body"
+      <form onSubmit={handleSubmit} className="post-form-layout">
+        <div className="post-form-main">
+          <div className="post-title-wrap">
+            <label className="sr-only" htmlFor="post-title">Post title</label>
+            <input
+              id="post-title"
+              type="text"
+              className="post-title-input"
+              placeholder="Give your post a clear, compelling title…"
+              value={values.title}
+              onChange={e => handleTitleChange(e.target.value)}
+              required
             />
           </div>
 
-          <div className="form-box">
-            <div className="form-field-header">
-              <label htmlFor="post-excerpt">Excerpt / Summary</label>
-              <button
-                type="button"
-                className="form-link-btn"
-                onClick={() => updateField('excerpt', extractExcerpt(values.content))}
-              >
-                Auto-extract from content
-              </button>
-            </div>
+          <PostMediaPanel
+            blocksJson={values.blocksJson}
+            featuredUrl={values.thumbnail}
+            isUploadingFeatured={isUploadingThumb}
+            onFeaturedChange={url => updateField('thumbnail', url)}
+            onFeaturedUpload={uploadFeaturedImage}
+            onUploadImagesToContent={files => {
+              setIsUploadingContentImages(true);
+              setImageUploadBatch({ seq: Date.now(), files });
+            }}
+            isUploadingContentImages={isUploadingContentImages}
+            onAddImageBlock={() => setMediaInsert({ seq: Date.now(), type: 'image' })}
+            onAddVideoBlock={() => setMediaInsert({ seq: Date.now(), type: 'video' })}
+            onJumpToBlock={id => setScrollToBlockId(id)}
+          />
+
+          <div className="post-editor-surface">
+            <ContentBlockEditor
+              key={`${mode}-${initialValues.slug}`}
+              blocksJson={values.blocksJson}
+              contentHtml={values.content}
+              onChange={({ blocksJson, contentHtml }) =>
+                setValues(prev => ({ ...prev, blocksJson, content: contentHtml }))
+              }
+              mediaInsert={mediaInsert}
+              onMediaInsertDone={() => setMediaInsert(null)}
+              imageUploadBatch={imageUploadBatch}
+              onImageUploadBatchDone={() => {
+                setImageUploadBatch(null);
+                setIsUploadingContentImages(false);
+              }}
+              scrollToBlockId={scrollToBlockId}
+              onScrollToBlockDone={() => setScrollToBlockId(null)}
+            />
+          </div>
+
+          <CollapsibleFormSection title="Excerpt" icon="✎" hint={values.excerpt ? `${values.excerpt.slice(0, 40)}…` : 'Optional'}>
+            <button
+              type="button"
+              className="form-link-btn"
+              onClick={() => updateField('excerpt', extractExcerpt(values.content))}
+            >
+              Auto-extract from content
+            </button>
             <textarea
               id="post-excerpt"
               rows={3}
               className="form-textarea"
-              placeholder="Short preview for cards and meta descriptions..."
+              placeholder="Short preview for cards and search…"
               value={values.excerpt}
               onChange={e => updateField('excerpt', e.target.value)}
             />
-          </div>
+          </CollapsibleFormSection>
 
-          <div className="form-box">
-            <div className="form-field-header">
-              <div>
-                <h3 className="form-box-title">SEO / Google Meta</h3>
-                <p className="form-box-desc">Controls the title and description shown in Google search results.</p>
+          <CollapsibleFormSection title="SEO & search" icon="🔍" hint="Google & social">
+            <div className="seo-preview seo-preview--inline">
+              <p className="seo-preview-label">Search preview</p>
+              <div className="seo-preview-card">
+                <p className="seo-preview-title">{values.metaTitle || values.title || 'Post title'}</p>
+                <p className="seo-preview-url">
+                  {values.canonicalUrl || `proxyview.net/blog/${values.slug || 'your-slug'}`}
+                </p>
+                <p className="seo-preview-description">
+                  {values.metaDescription || values.excerpt || 'Meta description appears here.'}
+                </p>
               </div>
             </div>
-
             <div className="form-field">
               <div className="form-field-header">
-                <label htmlFor="post-meta-title">Meta Title</label>
-                <button
-                  type="button"
-                  className="form-link-btn"
-                  onClick={() => updateField('metaTitle', values.title)}
-                >
-                  Use post title
+                <label htmlFor="post-meta-title">Meta title</label>
+                <button type="button" className="form-link-btn" onClick={() => updateField('metaTitle', values.title)}>
+                  Use title
                 </button>
               </div>
               <input
                 id="post-meta-title"
                 type="text"
                 className="form-input"
-                placeholder="Custom Google search title (optional)"
                 value={values.metaTitle}
                 onChange={e => updateField('metaTitle', e.target.value)}
                 maxLength={META_TITLE_MAX}
               />
               <p className={`form-help seo-char-count ${values.metaTitle.length > META_TITLE_MAX ? 'over-limit' : ''}`}>
-                {values.metaTitle.length}/{META_TITLE_MAX} characters · Recommended 50–60
+                {values.metaTitle.length}/{META_TITLE_MAX}
               </p>
             </div>
-
             <div className="form-field">
               <div className="form-field-header">
-                <label htmlFor="post-meta-description">Meta Description</label>
+                <label htmlFor="post-meta-description">Meta description</label>
                 <button
                   type="button"
                   className="form-link-btn"
@@ -279,76 +303,50 @@ export default function PostForm({
                 id="post-meta-description"
                 rows={3}
                 className="form-textarea"
-                placeholder="Custom Google search description (optional)"
                 value={values.metaDescription}
                 onChange={e => updateField('metaDescription', e.target.value)}
                 maxLength={META_DESCRIPTION_MAX}
               />
               <p className={`form-help seo-char-count ${values.metaDescription.length > META_DESCRIPTION_MAX ? 'over-limit' : ''}`}>
-                {values.metaDescription.length}/{META_DESCRIPTION_MAX} characters · Recommended 150–160
+                {values.metaDescription.length}/{META_DESCRIPTION_MAX}
               </p>
             </div>
-
-            <div className="seo-preview">
-              <p className="seo-preview-label">Google preview</p>
-              <div className="seo-preview-card">
-                <p className="seo-preview-title">
-                  {values.metaTitle || values.title || 'Post title'}
-                </p>
-                <p className="seo-preview-url">
-                  proxyview.net/blog/{values.slug || 'your-post-slug'}
-                </p>
-                <p className="seo-preview-description">
-                  {values.metaDescription || values.excerpt || 'Your meta description will appear here.'}
-                </p>
-              </div>
+            <div className="form-field">
+              <label htmlFor="post-canonical-url">Canonical URL</label>
+              <input
+                id="post-canonical-url"
+                type="text"
+                className="form-input"
+                placeholder="/blog/slug"
+                value={values.canonicalUrl}
+                onChange={e => updateField('canonicalUrl', e.target.value)}
+              />
             </div>
-          </div>
+            <div className="form-field">
+              <label htmlFor="post-og-image">Open Graph image</label>
+              <input
+                id="post-og-image"
+                type="text"
+                className="form-input"
+                placeholder="Defaults to featured image"
+                value={values.ogImage}
+                onChange={e => updateField('ogImage', e.target.value)}
+              />
+            </div>
+            <label className="form-checkbox-row">
+              <input type="checkbox" checked={values.seoNoIndex} onChange={e => updateField('seoNoIndex', e.target.checked)} />
+              <span>NoIndex — hide from search engines</span>
+            </label>
+          </CollapsibleFormSection>
         </div>
 
-        <div>
-          <div className="form-box">
-            <h3 className="form-box-title">Publish</h3>
-            <p className="form-box-desc">Save as draft, publish immediately, or schedule for later.</p>
-
-            <div className="publish-options">
-              <label className={`publish-option ${values.publishOption === 'draft' ? 'active' : ''}`}>
-                <input
-                  type="radio"
-                  name="publish-option"
-                  checked={values.publishOption === 'draft'}
-                  onChange={() => setPublishOption('draft')}
-                />
-                <span className="publish-option-title">Draft</span>
-                <span className="publish-option-desc">Hidden from the public blog until published.</span>
-              </label>
-
-              <label className={`publish-option ${values.publishOption === 'publish' ? 'active' : ''}`}>
-                <input
-                  type="radio"
-                  name="publish-option"
-                  checked={values.publishOption === 'publish'}
-                  onChange={() => setPublishOption('publish')}
-                />
-                <span className="publish-option-title">Publish now</span>
-                <span className="publish-option-desc">Make this post visible on the blog immediately.</span>
-              </label>
-
-              <label className={`publish-option ${values.publishOption === 'schedule' ? 'active' : ''}`}>
-                <input
-                  type="radio"
-                  name="publish-option"
-                  checked={values.publishOption === 'schedule'}
-                  onChange={() => setPublishOption('schedule')}
-                />
-                <span className="publish-option-title">Schedule</span>
-                <span className="publish-option-desc">Choose a future date and time to publish automatically.</span>
-              </label>
-            </div>
-
+        <aside className="post-form-sidebar">
+          <div className="sidebar-card sidebar-card--publish">
+            <h3 className="sidebar-card-title">Publish</h3>
+            <PublishStatusPicker value={values.publishOption} onChange={setPublishOption} />
             {values.publishOption === 'schedule' && (
               <div className="form-field form-field-spaced">
-                <label htmlFor="post-scheduled-at">Publish date & time *</label>
+                <label htmlFor="post-scheduled-at">Publish at</label>
                 <input
                   id="post-scheduled-at"
                   type="datetime-local"
@@ -357,122 +355,102 @@ export default function PostForm({
                   onChange={e => updateField('scheduledAt', e.target.value)}
                   required
                 />
-                <p className="form-help">The post will appear on the blog at this time.</p>
               </div>
             )}
-          </div>
-
-          <div className="form-box">
-            <h3 className="form-box-title">Featured Image</h3>
-
-            {values.thumbnail && (
-              <div className="image-preview-wrapper">
-                <Image
-                  src={values.thumbnail}
-                  alt="Featured preview"
-                  width={380}
-                  height={220}
-                  unoptimized
-                  className="image-preview"
-                />
-                <button
-                  type="button"
-                  className="image-remove-btn"
-                  onClick={() => updateField('thumbnail', '')}
-                  title="Remove image"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-
-            <div className="form-field">
-              <label className="image-uploader-box">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleThumbnailUpload}
-                  className="sr-only"
-                  disabled={isUploadingThumb}
-                />
-                <div className="image-uploader-icon">🖼️</div>
-                <div className="image-uploader-title">
-                  {isUploadingThumb ? 'Uploading image...' : uploadLabel}
-                </div>
-                <div className="image-uploader-hint">PNG, JPG, WebP up to 10MB</div>
-              </label>
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="thumb-url">Or paste image URL</label>
-              <input
-                id="thumb-url"
-                type="text"
-                className="form-input"
-                placeholder="https://... or /images/..."
-                value={values.thumbnail}
-                onChange={e => updateField('thumbnail', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="form-box">
-            <h3 className="form-box-title">Post Settings</h3>
-
-            <div className="form-field">
-              <label htmlFor="post-category">Category</label>
-              <select
-                id="post-category"
-                className="form-select-full"
-                value={values.category}
-                onChange={e => updateField('category', e.target.value)}
-              >
-                {POST_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-                <option value="Other">Custom category...</option>
-              </select>
-
-              {values.category === 'Other' && (
-                <input
-                  type="text"
-                  className="form-input form-input-spaced"
-                  placeholder="Enter custom category..."
-                  value={values.customCategory}
-                  onChange={e => updateField('customCategory', e.target.value)}
-                />
-              )}
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="post-author">Author</label>
-              <input
-                id="post-author"
-                type="text"
-                className="form-input"
-                value={values.author}
-                onChange={e => updateField('author', e.target.value)}
-              />
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="post-date">Display Date</label>
-              <input
-                id="post-date"
-                type="text"
-                className="form-input"
-                value={values.date}
-                onChange={e => updateField('date', e.target.value)}
-              />
-              <p className="form-help">Shown on the blog card and article page.</p>
-            </div>
-          </div>
-
-          <div className="form-box form-box-muted">
-            <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-block">
+            <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-block post-sidebar-save">
               {isSubmitting ? submittingLabel : submitLabel}
             </button>
           </div>
+
+          <CollapsibleFormSection variant="sidebar" title="URL" icon="🔗" defaultOpen hint={values.slug || 'auto'}>
+            <input
+              id="post-slug"
+              type="text"
+              className="form-input"
+              placeholder="url-slug"
+              value={values.slug}
+              onChange={e => {
+                updateField('slug', e.target.value);
+                setCustomSlug(true);
+              }}
+            />
+            <p className="form-help post-slug-preview">proxyview.net/blog/{values.slug || '…'}</p>
+          </CollapsibleFormSection>
+
+          <CollapsibleFormSection
+            variant="sidebar"
+            title="Featured image"
+            icon="🖼"
+            defaultOpen={Boolean(values.thumbnail)}
+            hint={values.thumbnail ? 'Set' : 'None'}
+          >
+            {values.thumbnail && (
+              <div className="image-preview-wrapper image-preview-wrapper--compact">
+                <Image src={values.thumbnail} alt="" width={320} height={180} unoptimized className="image-preview" />
+                <button type="button" className="image-remove-btn" onClick={() => updateField('thumbnail', '')}>✕</button>
+              </div>
+            )}
+            <label className="image-uploader-box image-uploader-box--compact">
+              <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="sr-only" disabled={isUploadingThumb} />
+              <span>{isUploadingThumb ? 'Uploading…' : 'Upload image'}</span>
+            </label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Or paste URL"
+              value={values.thumbnail}
+              onChange={e => updateField('thumbnail', e.target.value)}
+            />
+          </CollapsibleFormSection>
+
+          <CollapsibleFormSection variant="sidebar" title="Categories & tags" icon="🏷" defaultOpen>
+            <TaxonomyChipPicker
+              label="Categories"
+              options={allCategories}
+              selectedIds={values.categoryIds}
+              onChange={ids => updateField('categoryIds', ids)}
+              emptyHint="Create categories in admin → Categories"
+            />
+            <p className="form-help">The first selected category is the label on blog cards.</p>
+            <TaxonomyChipPicker
+              label="Tags"
+              options={allTags}
+              selectedIds={values.tagIds}
+              onChange={ids => updateField('tagIds', ids)}
+              emptyHint="Create tags in admin → Tags"
+            />
+          </CollapsibleFormSection>
+
+          <CollapsibleFormSection
+            variant="sidebar"
+            title="Table of contents"
+            icon="☰"
+            defaultOpen
+            hint="In-page navigation"
+          >
+            <PostTocEditor
+              tocJson={values.tocJson}
+              contentHtml={values.content}
+              onChange={tocJson => updateField('tocJson', tocJson)}
+            />
+          </CollapsibleFormSection>
+
+          <CollapsibleFormSection variant="sidebar" title="Details" icon="⚙" hint={values.author}>
+            <div className="form-field">
+              <label htmlFor="post-author">Author</label>
+              <input id="post-author" type="text" className="form-input" value={values.author} onChange={e => updateField('author', e.target.value)} />
+            </div>
+            <div className="form-field">
+              <label htmlFor="post-date">Display date</label>
+              <input id="post-date" type="text" className="form-input" value={values.date} onChange={e => updateField('date', e.target.value)} />
+            </div>
+          </CollapsibleFormSection>
+        </aside>
+
+        <div className="post-form-faq">
+          <CollapsibleFormSection title="Post FAQ" icon="?" hint="Optional Q&A for this article">
+            <PostFaqEditor faqJson={values.faqJson} onChange={faqJson => updateField('faqJson', faqJson)} />
+          </CollapsibleFormSection>
         </div>
       </form>
     </div>

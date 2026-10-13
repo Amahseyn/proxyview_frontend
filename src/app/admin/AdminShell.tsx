@@ -51,6 +51,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <nav className="admin-nav" aria-label="Admin">
           <div className="admin-nav-group">
             <Link href="/admin" className={navClass(isPostsSection)}>Posts</Link>
+            <Link href="/admin/categories" className={navClass(pathname.startsWith('/admin/categories'))}>
+              Categories
+            </Link>
+            <Link href="/admin/tags" className={navClass(pathname.startsWith('/admin/tags'))}>
+              Tags
+            </Link>
             <Link href="/admin/glossary" className={navClass(pathname.startsWith('/admin/glossary'))}>
               Glossary
             </Link>

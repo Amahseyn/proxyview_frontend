@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'proxyview.net' },
       { protocol: 'https', hostname: 'secure.gravatar.com' },
       { protocol: 'https', hostname: 'flagcdn.com' },
+      { protocol: 'https', hostname: 'cdn.ipwhois.io' },
     ],
   },
   async redirects() {

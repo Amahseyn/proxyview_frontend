@@ -70,8 +70,9 @@ export function buildWebPageJsonLd({ name, description, path }: WebPageInput) {
   };
 }
 
-export function buildFaqPageJsonLd(faqs: FaqItem[]) {
+export function buildFaqPageJsonLd(faqs: FaqItem[], path = '/faq') {
   const siteUrl = getAbsoluteSiteUrl();
+  const url = resolveAbsoluteUrl(path, siteUrl);
 
   return {
     '@context': 'https://schema.org',
@@ -84,7 +85,7 @@ export function buildFaqPageJsonLd(faqs: FaqItem[]) {
         text: faq.answer,
       },
     })),
-    url: `${siteUrl}/faq`,
+    url,
   };
 }
 
@@ -105,15 +106,17 @@ export function buildBreadcrumbJsonLd(items: BreadcrumbItem[]) {
 
 export function buildBlogCollectionPageJsonLd(
   posts: Pick<Post, 'slug' | 'title'>[],
-  description: string
+  description: string,
+  options?: { path?: string; name?: string }
 ) {
   const siteUrl = getAbsoluteSiteUrl();
-  const url = `${siteUrl}/blog`;
+  const path = options?.path ?? '/blog';
+  const url = resolveAbsoluteUrl(path, siteUrl);
 
   return {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'Blog — ProxyView',
+    name: options?.name ?? 'Blog — ProxyView',
     description,
     url,
     isPartOf: {

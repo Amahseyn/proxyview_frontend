@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { checkIpWithScamalytics, isValidIp } from '@/lib/scamalytics';
+import { checkIpWithIpWho, isValidIp } from '@/lib/ipwho';
 
 function getClientIp(request: Request): string | null {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -42,13 +42,13 @@ export async function GET(request: Request) {
       );
     }
 
-    const result = await checkIpWithScamalytics(ip);
+    const result = await checkIpWithIpWho(ip);
 
     return NextResponse.json({ success: true, data: result });
   } catch (err) {
     console.error('Proxy check error:', err);
     const message = err instanceof Error ? err.message : 'Failed to check IP address.';
-    const status = message.includes('not configured') ? 503 : 502;
+    const status = 502;
     return NextResponse.json({ success: false, message }, { status });
   }
 }

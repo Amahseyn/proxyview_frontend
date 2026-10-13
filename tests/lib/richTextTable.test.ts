@@ -5,7 +5,15 @@ import {
   rebuildTableFromHtml,
   sanitizeCellRichContent,
   sanitizeImportedHtml,
+  stripStrayGreaterThanArtifacts,
 } from '@/lib/richTextTable';
+
+describe('stripStrayGreaterThanArtifacts', () => {
+  it('removes a stray greater-than after a closing paragraph tag', () => {
+    const input = '<p><span>Handover text.</span></p>>';
+    expect(stripStrayGreaterThanArtifacts(input)).toBe('<p><span>Handover text.</span></p>');
+  });
+});
 
 describe('sanitizeImportedHtml', () => {
   it('removes Google Docs off-white paragraph backgrounds', () => {

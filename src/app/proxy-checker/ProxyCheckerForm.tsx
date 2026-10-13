@@ -6,9 +6,7 @@ export default function ProxyCheckerForm() {
       <div className="page-hero page-hero--compact">
         <div className="container">
           <h1>IP Checker</h1>
-          <p>
-            Test any IP for VPN, datacenter, TOR, and fraud risk signals before you route traffic through it.
-          </p>
+          <p>Confirm where an IP appears to be and who hosts it—before you trust a proxy.</p>
         </div>
       </div>
 

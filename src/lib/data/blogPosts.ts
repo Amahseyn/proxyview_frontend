@@ -2,7 +2,23 @@ import type { Post } from '@/lib/types/post';
 
 type BlogPostSeed = Omit<
   Post,
-  'id' | 'createdAt' | 'updatedAt' | 'status' | 'scheduledAt' | 'metaTitle' | 'metaDescription'
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'status'
+  | 'scheduledAt'
+  | 'metaTitle'
+  | 'metaDescription'
+  | 'blocksJson'
+  | 'faqJson'
+  | 'tocJson'
+  | 'categoryIds'
+  | 'categories'
+  | 'tagIds'
+  | 'tags'
+  | 'canonicalUrl'
+  | 'ogImage'
+  | 'seoNoIndex'
 >;
 
 export const blogPosts: BlogPostSeed[] = [

@@ -45,7 +45,7 @@ describe('Upload API', () => {
 
     expect(response.status).toBe(400);
     expect(body.success).toBe(false);
-    expect(body.message).toBe('No image file uploaded');
+    expect(body.message).toBe('No file uploaded');
   });
 
   it('rejects unsupported file types', async () => {
@@ -55,7 +55,7 @@ describe('Upload API', () => {
 
     expect(response.status).toBe(400);
     expect(body.success).toBe(false);
-    expect(body.message).toContain('Only image files');
+    expect(body.message).toContain('Only images');
   });
 
   it('uploads a valid PNG image', async () => {

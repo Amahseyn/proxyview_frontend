@@ -14,11 +14,26 @@ export function resolvePostMetaDescription(
   return post.metaDescription.trim() || post.excerpt.trim() || `${post.title} on ProxyView`;
 }
 
+export function resolvePostCanonicalPath(post: Pick<Post, 'canonicalUrl' | 'slug'>): string {
+  const custom = post.canonicalUrl?.trim() ?? '';
+  if (!custom) return `/blog/${post.slug}`;
+  if (custom.startsWith('/')) return custom;
+  return custom;
+}
+
+export function resolvePostOgImage(post: Pick<Post, 'ogImage' | 'thumbnail'>): string | undefined {
+  const og = post.ogImage?.trim() ?? '';
+  if (og) return og;
+  if (post.thumbnail?.trim()) return post.thumbnail;
+  return undefined;
+}
+
 export function buildPostMetadata(post: Post): Metadata {
   const title = resolvePostMetaTitle(post);
   const description = resolvePostMetaDescription(post);
   const hasCustomTitle = Boolean(post.metaTitle.trim());
-  const canonicalPath = `/blog/${post.slug}`;
+  const canonicalPath = resolvePostCanonicalPath(post);
+  const ogImage = resolvePostOgImage(post);
 
   return {
     title: hasCustomTitle ? { absolute: title } : title,
@@ -26,18 +41,19 @@ export function buildPostMetadata(post: Post): Metadata {
     alternates: {
       canonical: canonicalPath,
     },
+    robots: post.seoNoIndex ? { index: false, follow: true } : undefined,
     openGraph: {
       title,
       description,
       type: 'article',
       url: canonicalPath,
-      ...(post.thumbnail ? { images: [{ url: post.thumbnail }] } : {}),
+      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
     twitter: {
-      card: post.thumbnail ? 'summary_large_image' : 'summary',
+      card: ogImage ? 'summary_large_image' : 'summary',
       title,
       description,
-      ...(post.thumbnail ? { images: [post.thumbnail] } : {}),
+      ...(ogImage ? { images: [ogImage] } : {}),
     },
   };
 }

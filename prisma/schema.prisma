@@ -7,23 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Category {
+  id          Int            @id @default(autoincrement())
+  name        String
+  slug        String         @unique
+  description String         @default("")
+  posts       PostCategory[]
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  @@map("categories")
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  name      String
+  slug      String    @unique
+  posts     PostTag[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("tags")
+}
+
+model PostCategory {
+  postId     Int      @map("post_id")
+  categoryId Int      @map("category_id")
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+  @@map("post_categories")
+}
+
+model PostTag {
+  postId Int  @map("post_id")
+  tagId  Int  @map("tag_id")
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
 model Post {
   id          Int       @id @default(autoincrement())
   slug        String    @unique
   title       String
   excerpt     String    @default("")
   content     String    @default("")
+  blocksJson  String    @default("") @map("blocks_json")
+  faqJson     String    @default("") @map("faq_json")
+  tocJson     String    @default("") @map("toc_json")
   category    String    @default("Guides")
   author      String    @default("wm")
   date        String    @default("")
   thumbnail        String    @default("")
   metaTitle        String    @default("") @map("meta_title")
   metaDescription  String    @default("") @map("meta_description")
+  canonicalUrl     String    @default("") @map("canonical_url")
+  ogImage          String    @default("") @map("og_image")
+  seoNoIndex       Boolean   @default(false) @map("seo_no_index")
   url              String?
   status           String    @default("published")
   scheduledAt DateTime? @map("scheduled_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  categories PostCategory[]
+  tags       PostTag[]
 
   @@index([category])
   @@index([status])

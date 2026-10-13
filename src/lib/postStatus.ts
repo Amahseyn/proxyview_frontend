@@ -1,6 +1,6 @@
 import type { Post, PostInput, PostStatus } from '@/lib/types/post';
 
-export const POST_STATUSES: PostStatus[] = ['draft', 'published', 'scheduled'];
+export const POST_STATUSES: PostStatus[] = ['draft', 'published', 'scheduled', 'archived'];
 
 export function isValidPostStatus(value: string): value is PostStatus {
   return POST_STATUSES.includes(value as PostStatus);
@@ -23,6 +23,8 @@ export function getPostStatusLabel(status: PostStatus): string {
       return 'Scheduled';
     case 'published':
       return 'Published';
+    case 'archived':
+      return 'Archived';
   }
 }
 

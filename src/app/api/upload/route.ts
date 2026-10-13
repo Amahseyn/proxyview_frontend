@@ -12,16 +12,16 @@ import {
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get('image');
+    const file = formData.get('image') ?? formData.get('video') ?? formData.get('file');
 
     if (!file || !(file instanceof File)) {
-      return NextResponse.json({ success: false, message: 'No image file uploaded' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
     }
 
     const mimeType = resolveUploadMimeType(file);
     if (!mimeType) {
       return NextResponse.json(
-        { success: false, message: 'Only image files (JPEG, PNG, GIF, WebP, SVG) are allowed!' },
+        { success: false, message: 'Only images (JPEG, PNG, GIF, WebP, SVG) or videos (MP4, WebM, MOV) are allowed' },
         { status: 400 }
       );
     }
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        message: 'Image uploaded successfully',
+        message: mimeType.startsWith('video/') ? 'Video uploaded successfully' : 'Image uploaded successfully',
         url: relativeUrl,
         relativeUrl,
         filename,

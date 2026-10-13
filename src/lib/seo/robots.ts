@@ -42,7 +42,7 @@ export function buildRobots(): MetadataRoute.Robots {
         disallow,
       })),
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap_index.xml`,
     host: siteUrl.replace(/^https?:\/\//, ''),
   };
 }

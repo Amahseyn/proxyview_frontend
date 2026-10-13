@@ -4,7 +4,7 @@ import ProxyCheckerForm from './ProxyCheckerForm';
 export const metadata: Metadata = {
   title: 'IP Checker — ProxyView',
   description:
-    'Check any IP address for proxy, VPN, datacenter, and fraud risk signals in real time.',
+    'Check country, ISP, and time zone for any IP address—free on ProxyView.',
 };
 
 export default function ProxyCheckerPage() {

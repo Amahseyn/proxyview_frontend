@@ -15,13 +15,11 @@ export default async function NewsSection() {
         </p>
         <div className="news-grid">
           {posts.map((post) => (
-            <div key={post.id} className="news-card">
-              <h3 className="news-card-title">
-                <Link href={`/blog/${post.slug}`}>{post.title}</Link>
-              </h3>
+            <Link key={post.id} href={`/blog/${post.slug}`} className="news-card">
+              <h3 className="news-card-title">{post.title}</h3>
               <p className="news-card-excerpt">{post.excerpt}</p>
-              <Link href={`/blog/${post.slug}`} className="news-card-read">Read More »</Link>
-            </div>
+              <span className="news-card-read">Read More »</span>
+            </Link>
           ))}
         </div>
       </div>

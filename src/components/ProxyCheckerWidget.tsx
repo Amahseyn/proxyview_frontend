@@ -2,7 +2,6 @@
 
 import { useProxyChecker } from '@/hooks/useProxyChecker';
 import {
-  ClientEnvironment,
   ProxyCheckerFormFields,
   ProxyCheckerResults,
   useClientInfo,
@@ -35,11 +34,16 @@ export default function ProxyCheckerWidget({ idPrefix = 'proxy', compact = false
         onCheckMyIp={checkMyIp}
       />
 
-      {clientInfo && status === 'idle' && !result && (
-        <ClientEnvironment client={clientInfo} />
+      {status === 'loading' && (
+        <div className="ip-checker-loading" aria-live="polite">
+          <span className="ip-checker-loading-dot" />
+          Looking up…
+        </div>
       )}
 
-      {result && clientInfo && <ProxyCheckerResults result={result} client={clientInfo} />}
+      {result && status === 'success' && clientInfo && (
+        <ProxyCheckerResults result={result} client={clientInfo} />
+      )}
     </div>
   );
 }

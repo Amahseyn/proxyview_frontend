@@ -96,9 +96,19 @@ export function rebuildTableFromHtml(tableHtml: string): string {
   return `<table class="post-content-table"><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table>`;
 }
 
+/** Remove lone ">" text nodes after closing tags (common Google Docs paste artifact). */
+export function stripStrayGreaterThanArtifacts(html: string): string {
+  let out = html;
+  out = out.replace(/(<\/[a-zA-Z][^>]*>)\s*>+(?=\s*(?:<|$))/g, '$1');
+  out = out.replace(/<p[^>]*>\s*>\s*<\/p>/gi, '');
+  return out;
+}
+
 /** Full cleanup for blog posts pasted from Google Docs. */
 export function normalizeBlogPostHtml(html: string): string {
   let out = sanitizeImportedHtml(html);
+
+  out = stripStrayGreaterThanArtifacts(out);
 
   out = out.replace(/<table[\s\S]*?<\/table>/gi, (table) => rebuildTableFromHtml(table));
 

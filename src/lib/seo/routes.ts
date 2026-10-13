@@ -46,7 +46,8 @@ export const EXCLUDED_ROUTES: ReadonlyArray<{ pattern: string; reason: string }>
   { pattern: '/admin/posts/new', reason: 'Admin CMS create' },
   { pattern: '/admin/posts/*/edit', reason: 'Admin CMS edit' },
   { pattern: '/api/*', reason: 'API route' },
-  { pattern: '/blog?category=*', reason: 'Filtered blog view (canonical: /blog)' },
+  { pattern: '/blog?category=*', reason: 'Legacy category filter — redirects to /blog/category/*' },
+  { pattern: '/blog/category/* (empty)', reason: 'Empty category landing (noindex)' },
 ];
 
 /** Blog post dynamic route settings for the sitemap. */

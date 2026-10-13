@@ -9,12 +9,11 @@ export default function IpCheckerSection() {
             <p className="ip-checker-label">Free Tool</p>
             <h2 id="ip-checker-heading">IP Checker</h2>
             <p className="ip-checker-desc">
-              Verify any IP for VPN, datacenter, TOR, and fraud risk before you route traffic through a proxy.
+              See country, ISP, and time zone for any address—handy when you are testing a proxy.
             </p>
             <ul className="proxy-checker-tips">
-              <li>Confirm your proxy IP differs from your real connection.</li>
-              <li>Check that location matches what your provider promised.</li>
-              <li>Spot datacenter or VPN flags that trigger blocks.</li>
+              <li>Compare your real IP with your proxy IP.</li>
+              <li>Check that the location matches your provider.</li>
             </ul>
           </div>
 

@@ -2,13 +2,17 @@ import path from 'path';
 
 export const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads');
 
-export const ALLOWED_MIME_TYPES = [
+export const ALLOWED_IMAGE_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/gif',
   'image/webp',
   'image/svg+xml',
 ] as const;
+
+export const ALLOWED_VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'] as const;
+
+export const ALLOWED_MIME_TYPES = [...ALLOWED_IMAGE_MIME_TYPES, ...ALLOWED_VIDEO_MIME_TYPES] as const;
 
 export const EXTENSION_TO_MIME: Record<string, string> = {
   '.jpg': 'image/jpeg',
@@ -17,6 +21,9 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
   '.gif': 'image/gif',
   '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mov': 'video/quicktime',
 };
 
 export const MIME_TO_EXTENSION: Record<string, string> = {
@@ -25,6 +32,9 @@ export const MIME_TO_EXTENSION: Record<string, string> = {
   'image/gif': '.gif',
   'image/webp': '.webp',
   'image/svg+xml': '.svg',
+  'video/mp4': '.mp4',
+  'video/webm': '.webm',
+  'video/quicktime': '.mov',
 };
 
 export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;
@@ -54,7 +64,8 @@ export function resolveUploadExtension(file: File, mimeType: string): string {
 
 export function buildUploadFilename(file: File, mimeType: string): string {
   const ext = resolveUploadExtension(file, mimeType);
-  return `img-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+  const prefix = mimeType.startsWith('video/') ? 'vid' : 'img';
+  return `${prefix}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
 }
 
 export function getUploadServePath(filename: string): string {
@@ -67,5 +78,5 @@ export function getUploadContentType(filename: string): string {
 }
 
 export function isSafeUploadFilename(filename: string): boolean {
-  return /^img-\d+-\d+\.(jpe?g|png|gif|webp|svg)$/i.test(filename);
+  return /^(img|vid)-\d+-\d+\.(jpe?g|png|gif|webp|svg|mp4|webm|mov)$/i.test(filename);
 }

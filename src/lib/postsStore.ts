@@ -6,6 +6,7 @@ import {
   getAllPosts as repoGetAllPosts,
   queryPosts as repoQueryPosts,
   updatePost as repoUpdatePost,
+  duplicatePost as repoDuplicatePost,
   type PostsQuery,
 } from '@/lib/repositories/posts';
 
@@ -33,4 +34,8 @@ export function deletePost(id: number | string): Promise<Post | false> {
 
 export function queryPosts(params?: PostsQuery): Promise<{ data: Post[]; total: number }> {
   return repoQueryPosts(params);
+}
+
+export function duplicatePost(id: number | string): Promise<Post | null> {
+  return repoDuplicatePost(id);
 }

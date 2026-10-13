@@ -16,7 +16,7 @@ export default async function AntiDetectSection() {
         </p>
         <div className="antidetect-grid">
           {posts.map(post => (
-            <div key={post.id} className="antidetect-card">
+            <Link key={post.id} href={`/blog/${post.slug}`} className="antidetect-card">
               <div className="antidetect-card-thumb">
                 <Image
                   src={post.thumbnail || '/images/blog/web-scraping.jpg'}
@@ -33,15 +33,11 @@ export default async function AntiDetectSection() {
                   <span>·</span>
                   <span>{post.date}</span>
                 </p>
-                <h3 className="antidetect-card-title">
-                  <Link href={`/blog/${post.slug}`}>{post.title}</Link>
-                </h3>
+                <h3 className="antidetect-card-title">{post.title}</h3>
                 <p className="antidetect-card-excerpt">{post.excerpt}</p>
-                <Link href={`/blog/${post.slug}`} className="antidetect-card-read">
-                  Read More »
-                </Link>
+                <span className="antidetect-card-read">Read More »</span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

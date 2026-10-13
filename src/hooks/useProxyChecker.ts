@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { ScamalyticsResult } from '@/lib/scamalytics';
+import type { IpWhoResult } from '@/lib/ipwho';
 
 const API_BASE = '/api';
 
@@ -11,7 +11,7 @@ export function useProxyChecker() {
   const [ip, setIp] = useState('');
   const [status, setStatus] = useState<CheckerStatus>('idle');
   const [message, setMessage] = useState('');
-  const [result, setResult] = useState<ScamalyticsResult | null>(null);
+  const [result, setResult] = useState<IpWhoResult | null>(null);
 
   const runCheck = async (endpoint: string) => {
     setStatus('loading');
@@ -25,6 +25,9 @@ export function useProxyChecker() {
       if (data.success) {
         setStatus('success');
         setResult(data.data);
+        if (data.data?.ip) {
+          setIp(data.data.ip);
+        }
       } else {
         setStatus('error');
         setMessage(data.message || 'Could not check this IP address.');

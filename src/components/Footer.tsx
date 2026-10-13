@@ -5,11 +5,11 @@ import { SITE_EMAIL } from '@/lib/site';
 export default function Footer() {
   return (
     <footer className="footer">
-      <div className="footer-top container--wide" style={{ maxWidth: 'var(--max-width-footer)', margin: '0 auto', padding: '70px 70px', display: 'grid', gridTemplateColumns: '35% 17% 18% 18%', gap: '40px', borderBottom: '1px solid rgba(255,227,0,0.2)' }}>
+      <div className="footer-top container--wide">
         {/* Brand Column */}
-        <div className="footer-brand" style={{ borderRight: '1px solid rgba(255,227,0,0.4)', paddingRight: '40px' }}>
-          <div className="footer-logo" style={{ marginBottom: '20px' }}>
-            <Image src="/images/PROXYVIEW_LOGO.png" alt="ProxyView" width={242} height={90} style={{ width: '242px', height: 'auto' }} />
+        <div className="footer-brand">
+          <div className="footer-logo">
+            <Image src="/images/PROXYVIEW_LOGO.png" alt="ProxyView" width={242} height={90} />
           </div>
           <p className="footer-desc">
             We run unbiased, hands-on tests across leading proxy and anti-detect solutions. Whether you're scraping data, managing multiple accounts, or verifying ads, we break down performance, detectability, and compatibility by real-world use case.
@@ -36,10 +36,11 @@ export default function Footer() {
         <div>
           <h6 className="footer-col-title">Categories</h6>
           <nav className="footer-nav">
-            <Link href="/blog?category=guides">Guides</Link>
-            <Link href="/blog?category=comparisons">Comparisons</Link>
-            <Link href="/blog?category=research">Research</Link>
-            <Link href="/blog?category=reviews">Reviews</Link>
+            <Link href="/blog/category/guides">Guides</Link>
+            <Link href="/blog/category/comparisons">Comparisons</Link>
+            <Link href="/blog/category/research">Research</Link>
+            <Link href="/blog/category/reviews">Reviews</Link>
+            <Link href="/blog/category/news">News</Link>
           </nav>
         </div>
 

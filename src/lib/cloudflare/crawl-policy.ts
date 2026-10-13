@@ -5,7 +5,11 @@ export const AI_SCRAPABLE_PATHS = [
   '/glossary',
   '/faq',
   '/about_us',
+  '/sitemap_index.xml',
   '/sitemap.xml',
+  '/page-sitemap.xml',
+  '/post-sitemap.xml',
+  '/category-sitemap.xml',
   '/robots.txt',
 ] as const;
 
@@ -79,7 +83,11 @@ export function buildAiScrapablePathExpression(): string {
     'or http.request.uri.path eq "/glossary"',
     'or http.request.uri.path eq "/faq"',
     'or http.request.uri.path eq "/about_us"',
+    'or http.request.uri.path eq "/sitemap_index.xml"',
     'or http.request.uri.path eq "/sitemap.xml"',
+    'or http.request.uri.path eq "/page-sitemap.xml"',
+    'or http.request.uri.path eq "/post-sitemap.xml"',
+    'or http.request.uri.path eq "/category-sitemap.xml"',
     'or http.request.uri.path eq "/robots.txt"',
     ')',
   ].join(' ');

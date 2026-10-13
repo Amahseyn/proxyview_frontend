@@ -9,8 +9,21 @@ export async function GET(request: Request) {
   const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
   const page = searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : undefined;
   const admin = searchParams.get('admin') === 'true';
+  const tagId = searchParams.get('tagId') ? parseInt(searchParams.get('tagId')!, 10) : undefined;
+  const sortBy = (searchParams.get('sortBy') as 'id' | 'title' | 'date' | 'updatedAt' | 'status') || undefined;
+  const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined;
 
-  const { data, total } = await queryPosts({ category, search, status, limit, page, admin });
+  const { data, total } = await queryPosts({
+    category,
+    search,
+    status,
+    limit,
+    page,
+    admin,
+    tagId,
+    sortBy,
+    sortOrder,
+  });
   return NextResponse.json({ success: true, data, total });
 }
 
@@ -30,6 +43,14 @@ export async function POST(request: Request) {
       slug,
       status,
       scheduledAt,
+      blocksJson,
+      faqJson,
+      tocJson,
+      categoryIds,
+      tagIds,
+      canonicalUrl,
+      ogImage,
+      seoNoIndex,
     } = body;
 
     if (!title || !title.trim()) {
@@ -49,6 +70,14 @@ export async function POST(request: Request) {
       slug: slug || undefined,
       status: status || 'draft',
       scheduledAt: scheduledAt || null,
+      blocksJson: blocksJson || '',
+      faqJson: faqJson || '',
+      tocJson: tocJson || '',
+      categoryIds: Array.isArray(categoryIds) ? categoryIds : undefined,
+      tagIds: Array.isArray(tagIds) ? tagIds : undefined,
+      canonicalUrl: canonicalUrl || '',
+      ogImage: ogImage || '',
+      seoNoIndex: Boolean(seoNoIndex),
     });
 
     return NextResponse.json(

@@ -31,7 +31,7 @@ describe('Robots.txt generation', () => {
 
     expect(defaultRule?.allow).toBe('/');
     expect(defaultRule?.disallow).toEqual([...ROBOTS_DISALLOW_PATHS]);
-    expect(robots.sitemap).toBe('https://proxyview.net/sitemap.xml');
+    expect(robots.sitemap).toBe('https://proxyview.net/sitemap_index.xml');
     expect(robots.host).toBe('proxyview.net');
   });
 
@@ -75,6 +75,6 @@ describe('Robots.txt generation', () => {
     process.env.NEXT_PUBLIC_SITE_URL = 'https://www.proxyview.net';
 
     const robots = buildRobots();
-    expect(robots.sitemap).toBe('https://www.proxyview.net/sitemap.xml');
+    expect(robots.sitemap).toBe('https://www.proxyview.net/sitemap_index.xml');
   });
 });
