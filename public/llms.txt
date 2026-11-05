@@ -1,0 +1,53 @@
+# ProxyView
+
+> ProxyView (proxyview.net) is an independent proxy review and comparison site. We publish provider comparisons, practical guides, and research summaries covering proxy types, anti-detect browsers, web scraping, IP access issues, and account management. We are not a proxy provider and do not sell proxies.
+
+What we cover:
+- Proxy provider comparisons for specific use cases, including Reddit, Telegram, web scraping, and research.
+- Explainers on residential, datacenter, ISP, and mobile proxies.
+- Practical guides to proxy testing, connection troubleshooting, and account management.
+- Analysis of published research on web scraping access, data quality, and costs.
+- An IP checker and a glossary of proxy and anti-detect terminology.
+
+Editorial approach: Provider comparisons draw on published product information, pricing, and official documentation. Research articles analyze cited sources. Provider specifications and third-party findings are not original ProxyView test results. Some links may be affiliate links.
+
+Contact: hello@proxyview.net
+
+## Comparisons
+
+- [Best Reddit proxies in 2026: 6 providers compared](https://proxyview.net/blog/best-reddit-proxies-providers-compared): Comparison of published product features, entry costs, IP persistence, and session options for Reddit use cases.
+- [Best Telegram proxies: providers, pricing, and setup compared](https://proxyview.net/blog/best-telegram-proxies-providers-pricing-and-setup-compared): Comparison of published pricing, traffic allowances, and connection options, with SOCKS5 and MTProto setup guidance.
+- [Residential vs datacenter proxies](https://proxyview.net/blog/residential-vs-datacenter-proxies): Differences in IP origin, pricing, speed, detection considerations, and suitability for different tasks.
+
+## Guides
+
+- [Proxy types explained: residential, datacenter, ISP, and mobile](https://proxyview.net/blog/proxy-types-explained): How the four proxy types work and which connection characteristics matter when choosing one.
+- [What is a proxy used for? 8 real-world use cases](https://proxyview.net/blog/what-is-the-use-case-of-a-proxy): Proxy applications in web scraping, ad verification, price monitoring, SEO, account management, and security testing.
+- [How to test if your proxy is working](https://proxyview.net/blog/how-to-test-if-your-proxy-is-working): Checks for the visible IP address, location, target-site access, latency, and rotation behavior.
+- [How to get around an IP ban](https://proxyview.net/blog/how-to-get-around-an-ip-ban): Troubleshooting IP-related access restrictions, distinguishing connection and account problems, and reviewing recovery options.
+- [What is web scraping? A practical guide for 2026](https://proxyview.net/blog/what-is-web-scraping): An introduction to fetching pages, extracting data, scraping tools, and the role of proxies.
+- [How can you have multiple Reddit accounts? Rules and setup](https://proxyview.net/blog/how-can-you-have-multiple-reddit-accounts): Creating and switching between Reddit accounts, understanding prohibited uses, and responding to account restrictions.
+- [Telegram Web: how to log in and what you can do from a browser](https://proxyview.net/blog/web-telegram-login-and-features): Browser login methods, messaging features, session management, and account security.
+
+## Research
+
+- [Web scraping challenges: access, data quality, and costs](https://proxyview.net/blog/full-research-on-web-scraping-challenges-access-data-quality-and-costs): Analysis of published research and platform documentation on access failures, data quality, API limitations, and collection costs.
+- [How researchers use proxies for data collection and web scraping](https://proxyview.net/blog/how-researchers-use-proxies-for-research-and-web-scraping): An overview of proxy use in academic and market research, with collection planning and methodological considerations.
+
+## Tools and reference
+
+- [IP checker](https://proxyview.net/proxy-checker): Free tool for looking up IP address information.
+- [Proxy glossary](https://proxyview.net/glossary): Definitions of proxy, anti-detect browser, networking, and web scraping terms.
+- [FAQ](https://proxyview.net/faq): Common questions about proxies, anti-detect tools, and ProxyView.
+
+## About
+
+- [About ProxyView](https://proxyview.net/about_us): Information about ProxyView, its editorial team roles, and its stated review approach.
+- [Contact](https://proxyview.net/contact_us): Contact information for questions, partnership inquiries, and feedback.
+- [Blog](https://proxyview.net/blog): Browse ProxyView guides, comparisons, and research articles.
+
+## Optional
+
+- [Privacy policy](https://proxyview.net/privacy-policy): Information about the site's privacy practices.
+- [Terms and conditions](https://proxyview.net/terms_conditions): Terms governing use of the website.
+
