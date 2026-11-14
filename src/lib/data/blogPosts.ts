@@ -30,7 +30,7 @@ export const blogPosts: BlogPostSeed[] = [
     category: 'Guides',
     author: 'wm',
     date: 'March 4, 2026',
-    thumbnail: '/images/blog/web-scraping.jpg',
+    thumbnail: '/api/uploads/img-1793384479817-751804414.webp',
     url: '/blog/what-is-web-scraping',
     content: `<p>You need competitor prices. Or a list of every product in a category. Or news headlines from the last six months. Opening each page by hand is not going to work — and that is usually where web scraping enters the picture.</p>
 

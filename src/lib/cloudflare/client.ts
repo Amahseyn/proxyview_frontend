@@ -74,3 +74,31 @@ export async function applyRecommendedZoneSettings(config: CloudflareConfig) {
 
   return applied;
 }
+
+export async function purgeCloudflareCache(config: CloudflareConfig, files?: string[]) {
+  return cloudflareFetch<{ id: string }>(
+    config,
+    `/zones/${config.zoneId}/purge_cache`,
+    {
+      method: 'POST',
+      body: JSON.stringify(files?.length ? { files } : { purge_everything: true }),
+    }
+  );
+}
+
+export async function purgePostCloudflareCache(slug: string) {
+  try {
+    const { getCloudflareConfig } = await import('./config');
+    const config = getCloudflareConfig();
+    if (!config) return;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://proxyview.net';
+    const files = [
+      `${siteUrl}/blog`,
+      `${siteUrl}/blog/${slug}`,
+      `${siteUrl}/`,
+    ];
+    await purgeCloudflareCache(config, files);
+  } catch (err) {
+    console.warn('Failed to purge Cloudflare cache for post:', err);
+  }
+}

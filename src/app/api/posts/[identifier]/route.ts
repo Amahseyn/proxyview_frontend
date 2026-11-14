@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { findPost, updatePost, deletePost } from '@/lib/postsStore';
+import { purgePostCloudflareCache } from '@/lib/cloudflare/client';
 
 type RouteContext = { params: Promise<{ identifier: string }> };
 
@@ -25,6 +27,15 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ success: false, message: 'Post not found or cannot be updated' }, { status: 404 });
     }
 
+    try {
+      revalidatePath('/blog');
+      revalidatePath(`/blog/${updated.slug}`);
+      revalidatePath('/');
+      purgePostCloudflareCache(updated.slug);
+    } catch (e) {
+      console.warn('Failed to revalidate path:', e);
+    }
+
     return NextResponse.json({ success: true, message: 'Post updated successfully', data: updated });
   } catch (err) {
     console.error('Error updating post:', err);
@@ -41,6 +52,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     if (!deleted) {
       return NextResponse.json({ success: false, message: 'Post not found or already deleted' }, { status: 404 });
+    }
+
+    try {
+      revalidatePath('/blog');
+      revalidatePath(`/blog/${deleted.slug}`);
+      revalidatePath('/');
+      purgePostCloudflareCache(deleted.slug);
+    } catch (e) {
+      console.warn('Failed to revalidate path:', e);
     }
 
     return NextResponse.json({ success: true, message: 'Post deleted successfully', data: deleted });

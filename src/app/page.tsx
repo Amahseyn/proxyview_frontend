@@ -11,8 +11,9 @@ const HOME_DESCRIPTION =
   'Find the Best Proxy Providers for Your Use Case. We run unbiased, hands-on tests across leading proxy and anti-detect solutions.';
 
 export const metadata: Metadata = {
-  title: 'Home — ProxyView',
+  title: { absolute: 'ProxyView: Independent Proxy Reviews and Comparisons' },
   description: HOME_DESCRIPTION,
+  alternates: { canonical: '/' },
 };
 
 export default function HomePage() {

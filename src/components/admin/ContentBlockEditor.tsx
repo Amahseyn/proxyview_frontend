@@ -14,6 +14,7 @@ import { getEditorPlainStats } from '@/lib/editorStats';
 import { buildTableHtml } from '@/lib/richTextTable';
 import { createBlockId } from '@/lib/contentBlocks/ids';
 import { isVideoEmbedUrl, videoPreviewPoster } from '@/lib/contentBlocks/postMedia';
+import { IMAGE_ACCEPT_STRING, isImageFile } from '@/lib/clientUploads';
 
 export type MediaInsertRequest = { seq: number; type: 'image' | 'video' };
 
@@ -139,14 +140,14 @@ function RichField({
 }
 
 function MediaUploadField({
-  accept,
+  accept = IMAGE_ACCEPT_STRING,
   label,
   onUploaded,
   onUploadedMany,
   multiple = false,
   variant = 'button',
 }: {
-  accept: string;
+  accept?: string;
   label: string;
   onUploaded: (url: string) => void;
   onUploadedMany?: (urls: string[]) => void;
@@ -181,16 +182,30 @@ function MediaUploadField({
           setUploading(true);
           try {
             const urls: string[] = [];
+            const failures: string[] = [];
             for (const file of files) {
               const res = await uploadImage(file);
-              if (res.success && res.url) urls.push(res.url);
+              if (res.success && res.url) {
+                urls.push(res.url);
+              } else {
+                failures.push(`${file.name}: ${res.message || 'failed'}`);
+              }
             }
-            if (!urls.length) return;
+            if (!urls.length) {
+              window.alert(failures.join('\n') || 'Image upload failed');
+              return;
+            }
+            if (failures.length) {
+              window.alert(`Uploaded ${urls.length} image(s). Some failed:\n${failures.join('\n')}`);
+            }
             if (multiple && onUploadedMany) {
               onUploadedMany(urls);
             } else {
               onUploaded(urls[0]);
             }
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Image upload failed';
+            window.alert(message);
           } finally {
             setUploading(false);
             e.target.value = '';
@@ -284,7 +299,7 @@ function BlockBody({
           ) : (
             <div className="block-media-empty">
               <MediaUploadField
-                accept="image/*"
+                accept={IMAGE_ACCEPT_STRING}
                 label="Upload images"
                 variant="dropzone"
                 multiple
@@ -304,7 +319,7 @@ function BlockBody({
           )}
           {block.src && (
             <div className="block-special-actions">
-              <MediaUploadField accept="image/*" label="Replace" onUploaded={url => onUpdate({ ...block, src: url })} />
+              <MediaUploadField accept={IMAGE_ACCEPT_STRING} label="Replace" onUploaded={url => onUpdate({ ...block, src: url })} />
               <button type="button" className="block-inline-action" onClick={() => onUpdate({ ...block, src: '' })}>Remove</button>
               <button type="button" className="block-inline-action" onClick={() => setShowMediaDetails(v => !v)}>
                 {showMediaDetails ? 'Hide details' : 'Alt & caption'}
@@ -645,8 +660,13 @@ export default function ContentBlockEditor({
   };
 
   const handleImagesUpload = async (files: File[]) => {
-    const imageFiles = files.filter(f => f.type.startsWith('image/'));
-    if (!imageFiles.length) return;
+    const imageFiles = files.filter(isImageFile);
+    if (!imageFiles.length) {
+      if (files.length) {
+        window.alert('Please select valid image files (PNG, JPG, WebP, GIF, SVG).');
+      }
+      return;
+    }
 
     setIsUploadingImage(true);
     setImageUploadProgress(null);
@@ -785,7 +805,7 @@ export default function ContentBlockEditor({
           <label className="block-editor-chip block-editor-chip--btn">
             <input
               type="file"
-              accept="image/*"
+              accept={IMAGE_ACCEPT_STRING}
               multiple
               className="sr-only"
               disabled={isUploadingImage}

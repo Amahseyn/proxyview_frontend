@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { SITE_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Terms and Conditions — ProxyView',
+  title: 'Terms and Conditions',
+  alternates: { canonical: '/terms_conditions' },
   description: 'ProxyView terms and conditions — rules governing the use of our website.',
 };
 

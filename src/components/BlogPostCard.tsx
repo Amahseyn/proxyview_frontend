@@ -17,8 +17,8 @@ export default function BlogPostCard({ post }: Props) {
           <Image
             src={post.thumbnail}
             alt={post.title}
-            width={470}
-            height={300}
+            width={480}
+            height={270}
             unoptimized
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />

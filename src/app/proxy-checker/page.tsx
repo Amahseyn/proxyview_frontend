@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import ProxyCheckerForm from './ProxyCheckerForm';
 
 export const metadata: Metadata = {
-  title: 'IP Checker — ProxyView',
+  title: 'IP Checker',
+  alternates: { canonical: '/proxy-checker' },
   description:
     'Check country, ISP, and time zone for any IP address—free on ProxyView.',
 };

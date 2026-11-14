@@ -5,7 +5,8 @@ import { FAQ_ITEMS } from '@/lib/data/faqs';
 import { buildFaqPageJsonLd } from '@/lib/seo/jsonLd';
 
 export const metadata: Metadata = {
-  title: 'Frequently Asked Questions — ProxyView',
+  title: 'Frequently Asked Questions',
+  alternates: { canonical: '/faq' },
   description: 'Everything you need to know about proxies, anti-detect tools, and ProxyView.',
 };
 

@@ -12,6 +12,7 @@ import PublishStatusPicker from '@/components/admin/PublishStatusPicker';
 import TaxonomyChipPicker from '@/components/admin/TaxonomyChipPicker';
 import AdminAlert from '@/components/admin/AdminAlert';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { IMAGE_ACCEPT_STRING } from '@/lib/clientUploads';
 import { META_DESCRIPTION_MAX, META_TITLE_MAX } from '@/lib/postSeo';
 import { getEditorPlainStats } from '@/lib/editorStats';
 import {
@@ -81,6 +82,17 @@ export default function PostForm({
     setValues(prev => ({ ...prev, [key]: value }));
   };
 
+  const updateFeaturedImage = (url: string) => {
+    setValues(prev => {
+      const shouldSyncOg = !prev.ogImage.trim() || prev.ogImage === prev.thumbnail;
+      return {
+        ...prev,
+        thumbnail: url,
+        ogImage: shouldSyncOg ? url : prev.ogImage,
+      };
+    });
+  };
+
   const handleTitleChange = (title: string) => {
     setValues(prev => ({
       ...prev,
@@ -95,7 +107,7 @@ export default function PostForm({
     try {
       const res = await uploadImage(file);
       if (res.success && res.url) {
-        updateField('thumbnail', res.url);
+        updateFeaturedImage(res.url);
       } else {
         setErrorMsg(res.message || 'Failed to upload featured image.');
       }
@@ -206,7 +218,7 @@ export default function PostForm({
             blocksJson={values.blocksJson}
             featuredUrl={values.thumbnail}
             isUploadingFeatured={isUploadingThumb}
-            onFeaturedChange={url => updateField('thumbnail', url)}
+            onFeaturedChange={updateFeaturedImage}
             onFeaturedUpload={uploadFeaturedImage}
             onUploadImagesToContent={files => {
               setIsUploadingContentImages(true);
@@ -387,11 +399,11 @@ export default function PostForm({
             {values.thumbnail && (
               <div className="image-preview-wrapper image-preview-wrapper--compact">
                 <Image src={values.thumbnail} alt="" width={320} height={180} unoptimized className="image-preview" />
-                <button type="button" className="image-remove-btn" onClick={() => updateField('thumbnail', '')}>✕</button>
+                <button type="button" className="image-remove-btn" onClick={() => updateFeaturedImage('')}>✕</button>
               </div>
             )}
             <label className="image-uploader-box image-uploader-box--compact">
-              <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="sr-only" disabled={isUploadingThumb} />
+              <input type="file" accept={IMAGE_ACCEPT_STRING} onChange={handleThumbnailUpload} className="sr-only" disabled={isUploadingThumb} />
               <span>{isUploadingThumb ? 'Uploading…' : 'Upload image'}</span>
             </label>
             <input
@@ -399,7 +411,7 @@ export default function PostForm({
               className="form-input"
               placeholder="Or paste URL"
               value={values.thumbnail}
-              onChange={e => updateField('thumbnail', e.target.value)}
+              onChange={e => updateFeaturedImage(e.target.value)}
             />
           </CollapsibleFormSection>
 

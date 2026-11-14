@@ -15,6 +15,7 @@ Contact: hello@proxyview.net
 
 ## Comparisons
 
+- [Best Facebook proxies for agencies and media buyers](https://proxyview.net/blog/best-facebook-proxies-for-agencies-and-media-buyers): Comparison of published pricing, session controls, and routing options for agency Facebook ad management and QA workflows.
 - [Best Reddit proxies in 2026: 6 providers compared](https://proxyview.net/blog/best-reddit-proxies-providers-compared): Comparison of published product features, entry costs, IP persistence, and session options for Reddit use cases.
 - [Best Telegram proxies: providers, pricing, and setup compared](https://proxyview.net/blog/best-telegram-proxies-providers-pricing-and-setup-compared): Comparison of published pricing, traffic allowances, and connection options, with SOCKS5 and MTProto setup guidance.
 - [Residential vs datacenter proxies](https://proxyview.net/blog/residential-vs-datacenter-proxies): Differences in IP origin, pricing, speed, detection considerations, and suitability for different tasks.

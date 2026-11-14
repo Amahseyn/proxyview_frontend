@@ -351,8 +351,28 @@ export async function uploadImage(file: File): Promise<{ success: boolean; url?:
       method: 'POST',
       body: formData,
     });
+
+    const contentType = res.headers.get('content-type') || '';
+    if (!res.ok) {
+      let errorMsg = `Upload failed (status ${res.status})`;
+      if (contentType.includes('application/json')) {
+        try {
+          const errJson = await res.json();
+          if (errJson?.message) errorMsg = errJson.message;
+        } catch {
+          // fallback
+        }
+      } else if (res.status === 413) {
+        errorMsg = 'File is too large for the server to process (max 10MB)';
+      }
+      return { success: false, message: errorMsg };
+    }
+
+    if (!contentType.includes('application/json')) {
+      return { success: false, message: 'Server returned an invalid response format' };
+    }
+
     const json = await res.json();
-    if (!res.ok) throw new Error(json.message || 'Image upload failed');
     const imageUrl = json.relativeUrl || json.url;
     return { success: true, url: imageUrl, message: json.message };
   } catch (err: unknown) {

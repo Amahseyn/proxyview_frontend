@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { queryPosts, createPost } from '@/lib/postsStore';
+import { purgePostCloudflareCache } from '@/lib/cloudflare/client';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -79,6 +81,15 @@ export async function POST(request: Request) {
       ogImage: ogImage || '',
       seoNoIndex: Boolean(seoNoIndex),
     });
+
+    try {
+      revalidatePath('/blog');
+      revalidatePath(`/blog/${newPost.slug}`);
+      revalidatePath('/');
+      purgePostCloudflareCache(newPost.slug);
+    } catch (e) {
+      console.warn('Failed to revalidate path:', e);
+    }
 
     return NextResponse.json(
       { success: true, message: 'Post created successfully', data: newPost },

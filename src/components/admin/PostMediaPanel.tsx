@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { collectPostMedia, isVideoEmbedUrl, videoPreviewPoster } from '@/lib/contentBlocks/postMedia';
+import { IMAGE_ACCEPT_STRING } from '@/lib/clientUploads';
 
 type PostMediaPanelProps = {
   blocksJson: string;
@@ -61,7 +62,7 @@ export default function PostMediaPanel({
             />
             <div className="post-media-featured-actions">
               <label className="btn btn-outline btn-sm post-media-file-btn">
-                <input type="file" accept="image/*" className="sr-only" disabled={isUploadingFeatured} onChange={handleFeaturedFile} />
+                <input type="file" accept={IMAGE_ACCEPT_STRING} className="sr-only" disabled={isUploadingFeatured} onChange={handleFeaturedFile} />
                 {isUploadingFeatured ? 'Uploading…' : 'Replace'}
               </label>
               <button type="button" className="btn btn-outline btn-sm" onClick={() => onFeaturedChange('')}>
@@ -71,7 +72,7 @@ export default function PostMediaPanel({
           </div>
         ) : (
           <label className="post-media-featured-empty">
-            <input type="file" accept="image/*" className="sr-only" disabled={isUploadingFeatured} onChange={handleFeaturedFile} />
+            <input type="file" accept={IMAGE_ACCEPT_STRING} className="sr-only" disabled={isUploadingFeatured} onChange={handleFeaturedFile} />
             <span className="post-media-featured-empty-icon" aria-hidden>🖼</span>
             <span>{isUploadingFeatured ? 'Uploading featured image…' : 'Upload featured image'}</span>
           </label>
@@ -90,7 +91,7 @@ export default function PostMediaPanel({
           <label className="btn btn-outline btn-sm post-media-file-btn">
             <input
               type="file"
-              accept="image/*"
+              accept={IMAGE_ACCEPT_STRING}
               multiple
               className="sr-only"
               disabled={isUploadingContentImages}

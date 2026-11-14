@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { uploadImage } from '@/lib/api';
+import { IMAGE_ACCEPT_STRING } from '@/lib/clientUploads';
 import {
   addTableColumn,
   addTableRowBelow,
@@ -471,7 +472,7 @@ export default function RichTextEditor({
               <span>{isUploading ? 'Uploading…' : 'Upload image'}</span>
               <input
                 type="file"
-                accept="image/*"
+                accept={IMAGE_ACCEPT_STRING}
                 disabled={isUploading}
                 onChange={handleImageFileUpload}
                 style={{ display: 'none' }}

@@ -1,27 +1,21 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { isKnownCategorySlug } from '@/lib/seo/categories';
+import { resolveLegacyBlogCategoryRedirect } from '@/lib/seo/legacyBlogCategoryRedirect';
 
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname !== '/blog') {
-    return NextResponse.next();
-  }
-
-  const category = request.nextUrl.searchParams.get('category');
-  if (!category) {
-    return NextResponse.next();
-  }
-
-  const slug = category.trim().toLowerCase();
-  if (!isKnownCategorySlug(slug)) {
+  const target = resolveLegacyBlogCategoryRedirect(
+    request.nextUrl.pathname,
+    request.nextUrl.searchParams
+  );
+  if (!target) {
     return NextResponse.next();
   }
 
   const destination = request.nextUrl.clone();
-  destination.pathname = `/blog/category/${slug}`;
-  destination.searchParams.delete('category');
+  destination.pathname = target.pathname;
+  destination.search = target.search;
 
-  return NextResponse.redirect(destination, 308);
+  return NextResponse.redirect(destination, 301);
 }
 
 export const config = {

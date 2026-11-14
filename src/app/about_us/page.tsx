@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About Us — ProxyView',
+  title: 'About Us',
+  alternates: { canonical: '/about_us' },
   description: 'Learn about ProxyView — an independent proxy review and comparison platform built on real-world testing.',
 };
 

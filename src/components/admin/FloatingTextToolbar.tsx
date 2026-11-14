@@ -26,6 +26,7 @@ import {
   IconUndo,
   IconUnlink,
 } from '@/components/admin/floatingToolbarIcons';
+import { IMAGE_ACCEPT_STRING } from '@/lib/clientUploads';
 
 type FloatingTextToolbarProps = {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -256,7 +257,7 @@ export default function FloatingTextToolbar({
           <input
             ref={imageInputRef}
             type="file"
-            accept="image/*"
+            accept={IMAGE_ACCEPT_STRING}
             multiple
             hidden
             disabled={isUploadingImage}

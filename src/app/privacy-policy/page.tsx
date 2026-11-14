@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { SITE_EMAIL } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — ProxyView',
+  title: 'Privacy Policy',
+  alternates: { canonical: '/privacy-policy' },
   description: 'ProxyView privacy policy — how we collect, use, and protect your data.',
 };
 
